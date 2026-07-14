@@ -304,6 +304,32 @@ function renderOwnerQueueFull() {
   $("ownerQueueFull").innerHTML = q.length
     ? `<div class="panel">${q.map((x, i) => `<div style="margin-bottom:14px"><b>${i + 1}. ${esc(x.title)}</b><div class="note"><b>Hvorfor:</b> ${esc(x.why)}\n<b>Slik:</b> ${esc(x.how)}</div></div>`).join("")}</div>`
     : `<div class="panel" style="border-color:rgba(123,216,143,.4)">Køen er tom – fabrikken er selvgående. 🟢</div>`;
+  renderSagaCases();
+}
+
+/* Sakskartet (Saga Utvikling): eier-saker med beslutningsunderlag fra
+ * sannhetslagets data/saga-cases.json – vises under DIN TUR i System. */
+let sagaCasesCache = null, sagaCasesFetched = false;
+async function renderSagaCases() {
+  const host = $("ownerQueueFull");
+  if (!host) return;
+  if (!sagaCasesFetched) {
+    sagaCasesFetched = true;
+    const s = window.CF.Sync.status();
+    if (s.configured) {
+      try {
+        const f = await window.CF.Gh.getFile(s.repo, "data/saga-cases.json", window.CF.Sync.config().branch || "main");
+        if (f) sagaCasesCache = JSON.parse(f.content);
+      } catch { /* uten datarepo: ingen sakskart å vise */ }
+    }
+  }
+  const open = ((sagaCasesCache && sagaCasesCache.cases) || []).filter((c) => c.status === "til_beslutning");
+  let panel = document.getElementById("sagaCasesPanel");
+  if (!open.length) { if (panel) panel.remove(); return; }
+  if (!panel) { panel = document.createElement("div"); panel.id = "sagaCasesPanel"; host.after(panel); }
+  panel.innerHTML = `<div class="panel" style="border-color:rgba(255,209,102,.35)"><h3>SAKSKARTET – ${open.length} EIER-SAKER (Saga Utvikling)</h3>` +
+    open.map((c) => `<div style="margin-bottom:14px"><b>${esc(c.id)}: ${esc(c.title)}</b> <span class="badge est">${esc(c.deadline)}</span><div class="note"><b>Innstilling:</b> ${esc(c.recommendation)}\n<b>Kost:</b> ${esc((c.costNok && c.costNok.estimate) || "?")} · <b>Risiko:</b> ${esc(c.risk)}${(c.dependsOn || []).length ? ` · <b>Etter:</b> ${c.dependsOn.map(esc).join(", ")}` : ""}</div></div>`).join("") +
+    `</div>`;
 }
 
 function renderSyncStatus(msg) {

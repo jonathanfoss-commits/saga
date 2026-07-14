@@ -53,12 +53,17 @@ const company = (over) => ({
   check("uten VERCEL_TOKEN: FAKTISK degraderes til ESTIMAT med ærlig kildenotat", d.label === "ESTIMAT" && d.source.includes("IKKE verifisert"), d);
 }
 
-/* 3: styremøtet ser selskapet, klokken og den åpne styresaken */
+/* 3: styremøtet ser selskapet, klokken, den åpne styresaken og sakskartet */
 {
   const { dataDir } = freshDir([company()]);
+  fs.writeFileSync(path.join(dataDir, "saga-cases.json"), JSON.stringify({ schema: 1, cases: [
+    { id: "S1", title: "Registrer domener", status: "til_beslutning", deadline: "denne uken", costNok: { estimate: "300–500 kr" }, recommendation: "GJØR NÅ. Ferskvare.", risk: "lav" },
+    { id: "S9", title: "Avgjort sak", status: "besluttet", deadline: "-", recommendation: "-", risk: "-" },
+  ] }));
   agent("board-meeting.js", dataDir, {});
   const board = JSON.parse(fs.readFileSync(path.join(dataDir, "board", new Date().toISOString().slice(0, 10) + ".json"), "utf-8"));
   check("styremøtet uten fabrikkdata, med selskap: companies=1 og kilde oppgitt", board.companies === 1 && board.source.includes("companies.json"), board);
+  check("sakskartet: kun åpne eier-saker telles (1 av 2)", board.sagaCases === 1, board.sagaCases);
 }
 
 /* 4: utløpt selskapklokke uten signal → grunnlovsbrudd i morgenbriefen */

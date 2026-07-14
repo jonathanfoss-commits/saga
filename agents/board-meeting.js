@@ -47,6 +47,13 @@ async function run() {
   const summary = projects.map((p) => `- ${p.name}${p.test ? " (TEST)" : ""}: status ${p.status}, fase ${p.phase}, score ${p.evaluation ? p.evaluation.totalScore + "/100" : "ikke evaluert"}, sist oppdatert ${(p.updatedAt || "").slice(0, 10)}`).join("\n");
   const compText = companyLines(companiesDoc).join("\n");
 
+  /* Sakskartet (Saga Utvikling-formalisering): eier-saker med underlag – styret
+   * prioriterer og purrer, eieren beslutter og utfører. */
+  const sagaCases = readJSON(dataPath("saga-cases.json"), null);
+  const openCases = ((sagaCases && sagaCases.cases) || []).filter((s) => s.status === "til_beslutning");
+  out.sagaCases = openCases.length;
+  const caseText = openCases.map((s) => `- ${s.id} ${s.title} [frist: ${s.deadline}; kost: ${s.costNok && s.costNok.estimate}]: ${s.recommendation.split(".")[0]}.`).join("\n");
+
   /* Grunnlovsjekk FØR skjønn: harde terskler håndheves i kode, ikke i prompten.
    * Selskaper og fabrikkprosjekter er samme portefølje under samme terskler. */
   const { c, mode: cMode } = policy.load();
@@ -60,7 +67,7 @@ async function run() {
   const { text, mock } = await llm({
     agent: "board-meeting",
     system: `Du er AEIS-styret i nattmodus. Grunnlov: ha rett, ikke vær hyggelig; gjett aldri; merk usikkerhet. Nordstjerne: ${c && c.northStar ? c.northStar.text : "første 1 000 kr/mnd gjentakende"}. Vurder porteføljen nøkternt. For hvert selskap: kort VURDERING, én konkret ANBEFALING, og VARSEL hvis noe krever eieren. Åpne styresaker skal få innstillingen vurdert (enig/uenig + hvorfor). Flaggede grunnlovsbrudd SKAL få en anbefaling. Beslutninger tas ALDRI av styret – alt er innstillinger til eieren. Norsk, kompakt.`,
-    user: `PORTEFØLJE (fra eierens synkede data):\n${summary || "(ingen fabrikkprosjekter)"}\n\nSELSKAPER (fra sannhetslagets selskapsregister, kilder pr. tall):\n${compText || "(ingen registrerte selskaper)"}\n\n${policyText}\n\nSkriv nattens styreprotokoll.`,
+    user: `PORTEFØLJE (fra eierens synkede data):\n${summary || "(ingen fabrikkprosjekter)"}\n\nSELSKAPER (fra sannhetslagets selskapsregister, kilder pr. tall):\n${compText || "(ingen registrerte selskaper)"}\n\nÅPNE EIER-SAKER (sakskartet – purr på det som haster):\n${caseText || "(ingen)"}\n\n${policyText}\n\nSkriv nattens styreprotokoll.`,
     mockText: MOCK_PROTOCOL,
   });
   out.mode = mock ? "mock" : "live";
