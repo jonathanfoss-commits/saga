@@ -1,0 +1,928 @@
+{
+  "cf_index": [
+    "pmrkxh3i25td"
+  ],
+  "cf_project_pmrkxh3i25td": {
+    "id": "pmrkxh3i25td",
+    "name": "En abbonementstjeneste hvor man kan lagr",
+    "idea": "En abbonementstjeneste hvor man kan lagre viktig informasjon som blir delt med pårørende/arvinger ved evt død eller sykdom. For eksempel: passord, bankontoer, testamenter, forsikringer, hvor i huset er vannkranen, avtaler osv,",
+    "test": false,
+    "status": "validering",
+    "phase": 2,
+    "maturity": null,
+    "createdAt": "2026-07-14T17:31:21.722Z",
+    "updatedAt": "2026-07-14T18:39:05.449Z",
+    "assumptions": [
+      {
+        "claim": "Pårørende mangler ofte oversikt over avdødes viktige informasjon",
+        "type": "antakelse",
+        "confidence": "middels",
+        "source": "inntak",
+        "at": "2026-07-14T17:32:09.146Z"
+      },
+      {
+        "claim": "Folk er villige til å betale løpende for en tjeneste de sjelden bruker aktivt",
+        "type": "antakelse",
+        "confidence": "lav",
+        "source": "inntak",
+        "at": "2026-07-14T17:32:09.146Z"
+      },
+      {
+        "claim": "Målgruppen er primært voksne 45+ med familie og verdier",
+        "type": "antakelse",
+        "confidence": "lav",
+        "source": "inntak",
+        "at": "2026-07-14T17:32:09.146Z"
+      },
+      {
+        "claim": "Sammenlignbare digital arv-/passordtjenester eksisterer allerede",
+        "type": "fakta",
+        "confidence": "middels",
+        "source": "inntak",
+        "at": "2026-07-14T17:32:09.146Z"
+      },
+      {
+        "claim": "Tjenesten kan selges via partnerskap med forsikring/bank/begravelsesbyrå",
+        "type": "antakelse",
+        "confidence": "lav",
+        "source": "inntak",
+        "at": "2026-07-14T17:32:09.146Z"
+      },
+      {
+        "claim": "Deling av bankkontoer/passord/testament ved død har juridiske og sikkerhetsmessige krav",
+        "type": "krever_ekstern_validering",
+        "confidence": "høy",
+        "source": "inntak",
+        "at": "2026-07-14T17:32:09.146Z"
+      },
+      {
+        "claim": "En pålitelig mekanisme for å verifisere død/alvorlig sykdom er teknisk og juridisk mulig",
+        "type": "krever_ekstern_validering",
+        "confidence": "middels",
+        "source": "inntak",
+        "at": "2026-07-14T17:32:09.146Z"
+      },
+      {
+        "claim": "Digitalt delt testament/arveinformasjon er juridisk gyldig og praktisk brukbart i norsk arveoppgjør",
+        "type": "krever_ekstern_validering",
+        "confidence": "lav",
+        "source": "idévurdering",
+        "at": "2026-07-14T17:34:57.703Z"
+      },
+      {
+        "claim": "Et konkret segment har målbar betalingsintensjon for tjenesten",
+        "type": "krever_ekstern_validering",
+        "confidence": "lav",
+        "source": "idévurdering",
+        "at": "2026-07-14T17:34:57.703Z"
+      },
+      {
+        "claim": "Utløsermekanismen kan gjøres misbruksresistent, helst koblet til autoritativ kilde",
+        "type": "krever_ekstern_validering",
+        "confidence": "lav",
+        "source": "idévurdering",
+        "at": "2026-07-14T17:34:57.703Z"
+      },
+      {
+        "claim": "Kjernebehovet er ikke allerede dekket gratis av eksisterende aktører",
+        "type": "krever_ekstern_validering",
+        "confidence": "lav",
+        "source": "idévurdering",
+        "at": "2026-07-14T17:34:57.703Z"
+      }
+    ],
+    "decisions": [
+      {
+        "id": "bmrkzw73b4",
+        "at": "2026-07-14T18:39:05.447Z",
+        "role": "system",
+        "phase": 2,
+        "decision": "PORT GODKJENT: validering godkjent for MVP",
+        "options": [],
+        "rationale": "Eksplisitt eiergodkjenning.",
+        "assumptions": [],
+        "risk": "",
+        "revisit": "",
+        "byOwner": true
+      },
+      {
+        "id": "bmrkxz6xm3",
+        "at": "2026-07-14T17:45:25.978Z",
+        "role": "valideringsmodul",
+        "phase": 2,
+        "decision": "Eksperimentkø opprettet (4 tester)",
+        "options": [],
+        "rationale": "Avledet direkte fra de kritiske antakelsene – billigste test først, terskel definert før resultatet finnes.",
+        "assumptions": [],
+        "risk": "",
+        "revisit": "",
+        "byOwner": false
+      },
+      {
+        "id": "bmrkxncww2",
+        "at": "2026-07-14T17:36:13.856Z",
+        "role": "planmodul",
+        "phase": 2,
+        "decision": "Faseplan opprettet",
+        "options": [],
+        "rationale": "Prosjektet står på fase 2 og skal IKKE bygge noe før alle fire kill-terskler er passert. Rekkefølgen er bevisst optimalisert for å drepe billigst og raskest først: (1) konkurranse-kartlegging (1 dag, nesten gratis) – hvis Apple/Google/passordforvaltere/nordiske aktører allerede dekker behovet gratis, avvikles hele idéen umiddelbart. (2) Juridisk desk-research om arvegyldighet (1-3 dager) – hvis testament ikke er formgyldig digitalt, må verdiforslaget snevres eller drepes. (3) Misbruksresistent utløser (1-2 uker) – design på papir, red-team, partnerintervjuer; hele produktets tillit står/faller her. (4) Betalingsintensjon via landingsside (1-2 uker, kan kjøres parallelt med (3)). Kun hvis ALLE består går man videre. Den juridiske arve-avklaringen er bevisst løftet fra fase 10 inn i fase 2 fordi den er billig og kan drepe konseptet. Den fulle compliance-/sikkerhetsfasen (fase 10) forblir en hard port før bygging og krever fagperson – ikke intern gjetning. Fasene 3-9 og 11-16 er markert ikke-relevante NÅ, ikke permanent; de aktiveres sekvensielt kun ved bestått validering. Advarsel: ikke la ett positivt signal (f.eks. bra landingsside-konvertering) overstyre et negativt juridisk eller trigger-funn.",
+        "assumptions": [],
+        "risk": "",
+        "revisit": "",
+        "byOwner": false
+      },
+      {
+        "id": "bmrkxlq5l1",
+        "at": "2026-07-14T17:34:57.705Z",
+        "role": "studioleder",
+        "phase": 1,
+        "decision": "Idévurdering: VALIDER_MER (score 35/100)",
+        "options": [
+          "stopp",
+          "parker",
+          "valider_mer",
+          "endre_konsept",
+          "prototype",
+          "mvp",
+          "lansering"
+        ],
+        "rationale": "Alle fem roller anbefaler uavhengig samme kurs: ikke bygg, valider billig først. Tre uavhengige antakelser – juridisk brukbarhet, misbruksresistent utløser og betalingsvilje/churn – kan hver for seg drepe konseptet, og ingen er testet. Kostnaden ved validering er lav og rask; kostnaden ved å bygge (compliance, sikkerhet, honeypot-ansvar) er høy. Riktig grep er sekvensiell de-risking med harde kill-terskler, ikke MVP. Sett rekkefølgen slik at det som dreper billigst og raskest testes først (juridisk desk-research).",
+        "assumptions": [],
+        "risk": "Lav bruksfrekvens → høy churn (strukturell svakhet); Gratis/inkluderte substitutter fra Google, Apple, passordforvaltere; Uvalidert juridisk gyldighet av digitalt delt testament i Norge; Misbruksutsatt utløsermekanisme (falsk dødsmelding/social engineering); GDPR art. 9 helsedata + honeypot-risiko = tung compliance og katastrofal nedside; Betaler ≠ bruker: uavklart go-to-market; Betalingsvilje er ren antakelse uten signaler",
+        "revisit": "",
+        "byOwner": false
+      },
+      {
+        "id": "bmrkxi43f0",
+        "at": "2026-07-14T17:32:09.147Z",
+        "role": "inntaksmodul",
+        "phase": 0,
+        "decision": "Idé strukturert – godkjent for analyse",
+        "options": [],
+        "rationale": "En abonnementstjeneste for digital oppbevaring av viktig informasjon (passord, bankkontoer, testamenter, forsikringer, praktiske husholdningsdetaljer) som utløses og deles med pårørende/arvinger ved død eller alvorlig sykdom. Kjernen er en «digital dødsboks» med gjentakende inntekt. Kritiske uavklarte forhold er sikkerhet/tillit, juridisk gyldighet ved arv, og utløsermekanismen (hvordan bekrefte død/sykdom).",
+        "assumptions": [],
+        "risk": "",
+        "revisit": "",
+        "byOwner": false
+      }
+    ],
+    "phasePlan": {
+      "phases": [
+        {
+          "phase": 0,
+          "relevant": true,
+          "scope": "Idéen er allerede tatt inn og formulert. Ingen nytt arbeid, kun bekreftelse av at idéen er dokumentert og klar for videre validering.",
+          "key_deliverables": [
+            "Dokumentert idébeskrivelse (allerede levert)"
+          ],
+          "first_actions": [
+            "Bekreft at inntaksdokumentet er komplett"
+          ],
+          "stop_criteria": "Ingen – fasen er ferdig.",
+          "owner_role": "Eier",
+          "risks": [
+            "Ingen vesentlige"
+          ]
+        },
+        {
+          "phase": 1,
+          "relevant": true,
+          "scope": "Idévurdering er gjennomført med score 35/100 og beslutning valider_mer. Ingen nytt arbeid utover å notere kill-terskler.",
+          "key_deliverables": [
+            "Ferdig idévurdering (allerede levert)",
+            "Liste over kritiske antakelser med kill-terskler"
+          ],
+          "first_actions": [
+            "Bekreft de fire kritiske antakelsene som skal testes i fase 2"
+          ],
+          "stop_criteria": "Ingen – fasen er ferdig.",
+          "owner_role": "Company Factory (analyse)",
+          "risks": [
+            "At man ignorerer de harde kill-tersklene og hopper til bygging"
+          ]
+        },
+        {
+          "phase": 2,
+          "relevant": true,
+          "scope": "Kjernen i hele prosjektet akkurat nå. Sekvensiell de-risking av fire uavhengige antakelser som hver for seg kan drepe konseptet. Rekkefølge: (a) konkurranse-kartlegging (1 dag, billigst), (b) juridisk gyldighet arv (1-3 dager), (c) misbruksresistent utløser (1-2 uker), (d) betalingsintensjon via landingsside (1-2 uker). Ingen produktbygging.",
+          "key_deliverables": [
+            "Konkurranseoversikt: dekningsgrad Google Inactive Account Manager, Apple Legacy Contact, passordforvalteres legacy-funksjon, Lifekeys, bankenes dødsbotjenester",
+            "Juridisk desk-research + notat fra arveadvokat om formkrav i arveloven",
+            "Red-teamet trigger-design på papir + 3-5 intervjuer med begravelsesbyrå/forsikring + kartlegging av tilgang til Folkeregister/skifteattest",
+            "Landingsside med to posisjoneringer og konkret pris (79 kr/mnd, 490 kr/år) + betalt trafikk mot to segmenter",
+            "Målte konverteringstall: klikk→betalt intent per segment"
+          ],
+          "first_actions": [
+            "START HER (dag 1, billigst): Kartlegg om kjernebehovet allerede er dekket gratis av Apple/Google/passordforvaltere/nordiske aktører",
+            "Bestill 1-2 timer med arveadvokat om formkrav for testament og delt arveinformasjon",
+            "Skisser trigger-mekanisme på papir og forsøk aktivt å bryte den (red-team) før intervjuer",
+            "Bygg enkel landingsside med to varianter og sett opp betalt trafikk med intent-måling (ikke bare påmelding)"
+          ],
+          "stop_criteria": "KILL hvis kjernebehovet er tilstrekkelig dekket gratis for målsegmentet. KILL/snevre scope hvis testament ikke er formgyldig uten vitner/notar. KILL hvis ingen misbruksresistent verifiseringsvei finnes uten selvmeldt trigger. KILL hvis <1% konvertering til betalt intent i alle segmenter. Gå videre kun hvis ALLE fire består.",
+          "owner_role": "Company Factory (validering) + ekstern arveadvokat",
+          "risks": [
+            "Landingsside måler nysgjerrighet, ikke betalingsvilje – må måle betalt intent",
+            "Ett bestått segment kan gi falsk trygghet hvis juridikk/trigger fortsatt feiler",
+            "Fristelse til å bygge før alle fire portene er passert",
+            "Intervjuobjekter overvurderer egen distribusjonsvilje"
+          ]
+        },
+        {
+          "phase": 3,
+          "relevant": false,
+          "scope": "Utsettes til fase 2 er bestått. Forretningsmodell er meningsløs å detaljere før betaler, betalingsvilje og juridisk brukbarhet er bekreftet.",
+          "key_deliverables": [],
+          "first_actions": [],
+          "stop_criteria": "Aktiveres kun hvis fase 2 består alle kill-terskler.",
+          "owner_role": "Company Factory",
+          "risks": [
+            "Prematur modellering av inntekter uten validerte forutsetninger"
+          ]
+        },
+        {
+          "phase": 4,
+          "relevant": false,
+          "scope": "For tidlig. Selskap og strategi defineres først når konseptet er de-risket.",
+          "key_deliverables": [],
+          "first_actions": [],
+          "stop_criteria": "Aktiveres etter fase 3.",
+          "owner_role": "Eier",
+          "risks": [
+            "Kostnader og binding før idéen er validert"
+          ]
+        },
+        {
+          "phase": 5,
+          "relevant": false,
+          "scope": "MVP-omfang defineres ikke før validering er bestått. Merk at utløser-designet fra fase 2 blir kritisk input her.",
+          "key_deliverables": [],
+          "first_actions": [],
+          "stop_criteria": "Aktiveres etter bestått fase 2 og 3.",
+          "owner_role": "Company Factory",
+          "risks": [
+            "Bygge features før behov er bekreftet"
+          ]
+        },
+        {
+          "phase": 6,
+          "relevant": false,
+          "scope": "Merkevare er ikke relevant i valideringsfasen utover en enkel navn/posisjonering til landingssidetesten (som dekkes i fase 2).",
+          "key_deliverables": [],
+          "first_actions": [],
+          "stop_criteria": "Aktiveres først ved reell bygging.",
+          "owner_role": "Company Factory",
+          "risks": [
+            "Bruke tid på identitet før produktet er besluttet"
+          ]
+        },
+        {
+          "phase": 7,
+          "relevant": false,
+          "scope": "Teknisk arkitektur er høyrisiko og kostbar (kryptering, sikker lagring av bankdata/passord, misbruksresistent trigger). Skal IKKE påbegynnes før fase 2 og juridisk fase er avklart.",
+          "key_deliverables": [],
+          "first_actions": [],
+          "stop_criteria": "Aktiveres kun etter bestått validering OG juridisk/sikkerhetsavklaring.",
+          "owner_role": "Company Factory (teknisk)",
+          "risks": [
+            "Bygge honeypot-arkitektur med høyt sikkerhets- og ansvarsomfang før behov er bevist"
+          ]
+        },
+        {
+          "phase": 8,
+          "relevant": false,
+          "scope": "Produktbygging utsettes. Grunnloven er tydelig: valider billig før tung bygging.",
+          "key_deliverables": [],
+          "first_actions": [],
+          "stop_criteria": "Aktiveres først etter alle porter frem til fase 7.",
+          "owner_role": "Company Factory",
+          "risks": [
+            "Høye byggekostnader på uvalidert konsept"
+          ]
+        },
+        {
+          "phase": 9,
+          "relevant": false,
+          "scope": "Betalingsflyt bygges ikke nå. Prissignaler testes derimot i fase 2 via landingsside (ikke ekte betaling).",
+          "key_deliverables": [],
+          "first_actions": [],
+          "stop_criteria": "Aktiveres etter MVP-beslutning.",
+          "owner_role": "Eier",
+          "risks": [
+            "For tidlig integrasjon av betalingsløsning"
+          ]
+        },
+        {
+          "phase": 10,
+          "relevant": true,
+          "scope": "Delvis fremskutt: den juridiske desk-researchen om arvegyldighet ligger i fase 2 fordi den kan drepe konseptet billig. Den FULLE juridiske/personvern/sikkerhetsfasen (GDPR, lagring av passord/bankdata, ansvar ved lekkasje, databehandleravtaler) aktiveres først hvis validering består, men er en hard forutsetning før noen bygging.",
+          "key_deliverables": [
+            "(Fase 2) Notat om arvelovens formkrav og juridisk brukbarhet",
+            "(Senere) Full GDPR- og personvernvurdering, DPIA, sikkerhetskrav for sensitive data, ansvarsavklaring ved lekkasje"
+          ],
+          "first_actions": [
+            "Gjennomfør den juridiske desk-researchen i fase 2 først",
+            "Marker at full compliance-fase krever fagperson (jurist/personvernrådgiver) før bygging"
+          ],
+          "stop_criteria": "KILL hvis sikkerhets- og personvernkrav ikke kan oppfylles til en kostnad som gir lønnsom drift. Krever fagperson – ikke intern gjetning.",
+          "owner_role": "Ekstern jurist/personvernrådgiver + Eier",
+          "risks": [
+            "Undervurdering av compliance-kostnad for lagring av passord/bankdata",
+            "Ansvar ved datalekkasje kan gjøre driften uforsvarlig",
+            "Selvvurdering uten fagperson bryter grunnloven"
+          ]
+        },
+        {
+          "phase": 11,
+          "relevant": false,
+          "scope": "Markedsføring som fag utsettes. Merk at betalt testtrafikk til landingsside i fase 2 er validering, ikke markedsføring.",
+          "key_deliverables": [],
+          "first_actions": [],
+          "stop_criteria": "Aktiveres etter lanseringsbeslutning.",
+          "owner_role": "Company Factory",
+          "risks": [
+            "Skalere markedsføring før produkt-markedstilpasning"
+          ]
+        },
+        {
+          "phase": 12,
+          "relevant": false,
+          "scope": "Salg/partnerskap utsettes. Partnerintervjuene i fase 2 (begravelsesbyrå/forsikring) er validering av distribusjonsvilje, ikke salg.",
+          "key_deliverables": [],
+          "first_actions": [],
+          "stop_criteria": "Aktiveres etter validering.",
+          "owner_role": "Eier",
+          "risks": [
+            "Forhandle partnerskap før produktet finnes eller er lovlig"
+          ]
+        },
+        {
+          "phase": 13,
+          "relevant": false,
+          "scope": "Drift og kundeservice er ikke relevant før produkt bygges. Særlig sensitivt her: manuell verifisering av død krever robuste rutiner.",
+          "key_deliverables": [],
+          "first_actions": [],
+          "stop_criteria": "Aktiveres etter MVP.",
+          "owner_role": "Company Factory",
+          "risks": [
+            "Undervurdere driftskompleksitet ved trigger-verifisering"
+          ]
+        },
+        {
+          "phase": 14,
+          "relevant": false,
+          "scope": "Testing/QA utsettes til det finnes et produkt. Sikkerhetstesting blir kritisk gitt datatypen.",
+          "key_deliverables": [],
+          "first_actions": [],
+          "stop_criteria": "Aktiveres etter bygging.",
+          "owner_role": "Company Factory",
+          "risks": [
+            "Utilstrekkelig sikkerhetstesting av sensitive data"
+          ]
+        },
+        {
+          "phase": 15,
+          "relevant": false,
+          "scope": "Lansering utsettes. Eierbeslutning kreves.",
+          "key_deliverables": [],
+          "first_actions": [],
+          "stop_criteria": "Aktiveres etter QA.",
+          "owner_role": "Eier",
+          "risks": [
+            "For tidlig lansering av tillitssensitiv tjeneste"
+          ]
+        },
+        {
+          "phase": 16,
+          "relevant": false,
+          "scope": "Måling/vekst utsettes. Churn-risiko for 'sjelden brukt' tjeneste blir sentralt måltema senere.",
+          "key_deliverables": [],
+          "first_actions": [],
+          "stop_criteria": "Aktiveres etter lansering.",
+          "owner_role": "Company Factory",
+          "risks": [
+            "Høy churn pga. lav bruksfrekvens"
+          ]
+        }
+      ],
+      "sequencing_notes": "Prosjektet står på fase 2 og skal IKKE bygge noe før alle fire kill-terskler er passert. Rekkefølgen er bevisst optimalisert for å drepe billigst og raskest først: (1) konkurranse-kartlegging (1 dag, nesten gratis) – hvis Apple/Google/passordforvaltere/nordiske aktører allerede dekker behovet gratis, avvikles hele idéen umiddelbart. (2) Juridisk desk-research om arvegyldighet (1-3 dager) – hvis testament ikke er formgyldig digitalt, må verdiforslaget snevres eller drepes. (3) Misbruksresistent utløser (1-2 uker) – design på papir, red-team, partnerintervjuer; hele produktets tillit står/faller her. (4) Betalingsintensjon via landingsside (1-2 uker, kan kjøres parallelt med (3)). Kun hvis ALLE består går man videre. Den juridiske arve-avklaringen er bevisst løftet fra fase 10 inn i fase 2 fordi den er billig og kan drepe konseptet. Den fulle compliance-/sikkerhetsfasen (fase 10) forblir en hard port før bygging og krever fagperson – ikke intern gjetning. Fasene 3-9 og 11-16 er markert ikke-relevante NÅ, ikke permanent; de aktiveres sekvensielt kun ved bestått validering. Advarsel: ikke la ett positivt signal (f.eks. bra landingsside-konvertering) overstyre et negativt juridisk eller trigger-funn.",
+      "at": "2026-07-14T17:36:13.856Z"
+    },
+    "intake": {
+      "summary": "En abonnementstjeneste for digital oppbevaring av viktig informasjon (passord, bankkontoer, testamenter, forsikringer, praktiske husholdningsdetaljer) som utløses og deles med pårørende/arvinger ved død eller alvorlig sykdom. Kjernen er en «digital dødsboks» med gjentakende inntekt. Kritiske uavklarte forhold er sikkerhet/tillit, juridisk gyldighet ved arv, og utløsermekanismen (hvordan bekrefte død/sykdom).",
+      "problem": "Når noen dør eller blir alvorlig syk, sitter pårørende ofte uten oversikt over passord, kontoer, forsikringer, testament og praktiske forhold. Dette skaper stress, tapte verdier og praktiske problemer i en sårbar fase. Problemet er reelt og gjenkjennbart, men det er uklart hvor sterkt folk føler det i det daglige (lav opplevd hastegrad før noe skjer).",
+      "target_group": "Uklart definert i idéen. Sannsynlige segmenter (antakelse): voksne 45+ med familie/verdier, personer med kronisk/alvorlig sykdom, eneboende eldre, og pårørende som organiserer på vegne av foreldre. Betaleren og brukeren kan være ulike personer.",
+      "solution": "Digital hvelvtjeneste hvor bruker lagrer sensitiv informasjon, angir mottakere (pårørende/arvinger), og hvor informasjonen frigis ved en verifisert utløser (død/alvorlig sykdom). MVP kan være enkel: kryptert lagring + navngitte mottakere + manuell/verifisert utløsermekanisme.",
+      "willingness_to_pay": "Ukjent. Ingen priser eller betalingssignaler oppgitt av eier. Sammenlignbare tjenester (passordforvaltere, digital arv-tjenester) tar typisk 30–150 kr/mnd, men betalingsvilje for en tjeneste man 'håper å aldri trenge' er usikker og krever validering.",
+      "market": "Ukjent størrelse. Beslektede markeder finnes internasjonalt (f.eks. digital legacy / password managers med legacy-funksjon). Krever ekstern validering av markedsstørrelse og konkurranse i Norden.",
+      "channel": "Ikke oppgitt. Mulige kanaler (antakelse): partnerskap med forsikringsselskap, banker, begravelsesbyråer, advokater/arveoppgjør, samt direkte digital markedsføring mot 45+.",
+      "subscription_potential": "Høyt egnet for abonnement i teorien: informasjon må holdes oppdatert over tid, noe som gir naturlig gjentakende verdi. Risiko: lav bruksfrekvens kan gi høy churn siden brukeren sjelden ser verdien før en hendelse inntreffer.",
+      "assumptions": [
+        {
+          "claim": "Pårørende mangler ofte oversikt over avdødes viktige informasjon",
+          "type": "antakelse",
+          "confidence": "middels"
+        },
+        {
+          "claim": "Folk er villige til å betale løpende for en tjeneste de sjelden bruker aktivt",
+          "type": "antakelse",
+          "confidence": "lav"
+        },
+        {
+          "claim": "Målgruppen er primært voksne 45+ med familie og verdier",
+          "type": "antakelse",
+          "confidence": "lav"
+        },
+        {
+          "claim": "Sammenlignbare digital arv-/passordtjenester eksisterer allerede",
+          "type": "fakta",
+          "confidence": "middels"
+        },
+        {
+          "claim": "Tjenesten kan selges via partnerskap med forsikring/bank/begravelsesbyrå",
+          "type": "antakelse",
+          "confidence": "lav"
+        },
+        {
+          "claim": "Deling av bankkontoer/passord/testament ved død har juridiske og sikkerhetsmessige krav",
+          "type": "krever_ekstern_validering",
+          "confidence": "høy"
+        },
+        {
+          "claim": "En pålitelig mekanisme for å verifisere død/alvorlig sykdom er teknisk og juridisk mulig",
+          "type": "krever_ekstern_validering",
+          "confidence": "middels"
+        }
+      ],
+      "unknowns": [
+        "Hvem er den faktiske betaleren – brukeren selv eller pårørende?",
+        "Hvordan skal utløseren (død/sykdom) verifiseres på en sikker og misbruksresistent måte?",
+        "Er delt informasjon (testament, bankkontoer) juridisk gyldig/brukbar for arvinger i Norge?",
+        "Hvor stor er betalingsviljen og hvilken prismodell tåler markedet?",
+        "Hvordan håndteres personvern (GDPR), datasikkerhet og ansvar ved lekkasje?",
+        "Hva er churn-risikoen for en 'sjelden brukt' tjeneste?",
+        "Konkurransebilde og markedsstørrelse i Norden"
+      ],
+      "decision_changing_questions": [
+        "Hvem betaler – og vil de betale løpende, ikke bare en engangssum? (avgjør forretningsmodell)",
+        "Hvordan verifiseres død/alvorlig sykdom uten at systemet kan misbrukes? (kjerne-mekanisme; hele produktet står/faller på tillit her)",
+        "Er delt informasjon juridisk gyldig for arvinger, eller trengs kobling til testament/advokat/offentlig register? (avgjør produktets nytteverdi)",
+        "Kan sikkerhets- og personvernkravene (GDPR, lagring av passord/bankdata) oppfylles til en kostnad som gir lønnsom drift? (avgjør om det er byggbart lavterskel)",
+        "Finnes det allerede etablerte aktører (norsk/nordisk digital arv) som dekker dette, og hva er da differensieringen?"
+      ]
+    },
+    "evaluation": {
+      "framing": {
+        "case_summary": "Abonnementsbasert digital hvelvtjeneste hvor brukere lagrer sensitiv informasjon (passord, kontoer, forsikringer, testament) som frigis til navngitte pårørende ved en verifisert utløser (død/alvorlig sykdom). Problemet er reelt men har lav opplevd hastegrad, betalingsvilje er ukjent, og de kritiske uavklarte punktene handler om sikker utløser-verifisering, juridisk gyldighet i Norge, personvern/GDPR, betaler-identitet og churn-risiko for en sjelden brukt tjeneste.",
+        "selected_roles": [
+          "cf_studio",
+          "cf_kunde",
+          "cf_sikkerhet",
+          "cf_marked",
+          "cf_merkevare"
+        ],
+        "rationale": "cf_studio eier beslutningen og kill-disiplinen – uunnværlig. cf_kunde er kritisk fordi de to største truslene mot idéen er nettopp kundedomenet: hvem betaler (bruker vs. pårørende), lav opplevd hastegrad og potensielt høy churn på en tjeneste man 'håper å aldri trenge'. cf_sikkerhet er selve kjernerisikoen – hele produktets verdi og troverdighet står og faller på sikker, misbruksresistent utløser-verifisering, GDPR/persondata og ansvar ved lekkasje av svært sensitiv informasjon. cf_marked trengs for å avkrefte/bekrefte markedsstørrelse og konkurransebilde i Norden (password managers med legacy-funksjon finnes allerede), og for å vurdere kopieringsrisiko. cf_merkevare er relevant fordi kategorien er sensitiv (død/sykdom) og krever tillit og konkret, ikke-manipulerende kommunikasjon for i det hele tatt å skape betalingsvilje. Jeg utelater cf_ux, cf_vekst, cf_salg og cf_drift i denne tidlige framingen: de blir prematur detaljering før de mer fundamentale antakelsene (betaler, juridisk gyldighet, sikker utløser, marked) er validert. Juridisk gyldighet av delt testament/kontoinfo i Norge er en avgjørende ukjent som ingen av de tilgjengelige rollene dekker fullt ut – dette må flagges som ekstern validering (jurist)."
+      },
+      "verdicts": [
+        {
+          "roleId": "cf_studio",
+          "roleTitle": "Studioleder",
+          "weight": 1,
+          "position": "Betinget skeptisk – ikke bygg ennå. Idéen adresserer et reelt problem, men de tre dødelige antakelsene (verifiserbar utløser, betalingsvilje for lav-frekvent tjeneste, juridisk brukbarhet) er alle uvaliderte og hver for seg kan drepe konseptet. Krever billig validering før noen utvikling.",
+          "strongest_argument_against": "Kjerneverdien realiseres kun ved en hendelse brukeren håper aldri skjer – dette gir samtidig (a) lav opplevd hastegrad ved kjøp, (b) høy churn fordi brukeren aldri ser verdien i daglig bruk, og (c) en utløsermekanisme (dødsverifisering) som er teknisk/juridisk vanskelig og misbruksutsatt. En abonnementstjeneste med lav bruksfrekvens og svak akutt betalingsvilje er en klassisk churn-felle. Etablerte passordforvaltere (Bitwarden, 1Password) har allerede legacy/emergency-access-funksjoner nesten gratis, noe som truer betalingsviljen for en frittstående nisjeløsning.",
+          "top_risks": [
+            "Utløsermekanismen: sikker, misbruksresistent verifisering av død/alvorlig sykdom er kjerneproblemet – uten dette er produktet bare en dyr passordforvalter. Krever ekstern juridisk/teknisk validering.",
+            "Churn: lav-frekvent 'håper aldri å trenge'-tjeneste gir svak retensjon og undergraver hele abonnementslogikken.",
+            "Juridisk gyldighet: testament og arveinformasjon delt digitalt er trolig IKKE juridisk bindende i Norge – hvis produktet gir falsk trygghet er det både verdiløst og ansvarsrisiko.",
+            "GDPR/sikkerhetsansvar: lagring av landets mest sensitive data gir katastrofal nedsiderisiko ved lekkasje og høye compliance-kostnader – dårlig match med 'lave faste kostnader/enkel drift'.",
+            "Substitusjon: gratis/billige legacy-funksjoner i eksisterende passordforvaltere kan gjøre betalingsviljen tilnærmet null.",
+            "Uklar betaler: bruker vs. pårørende – uavklart go-to-market og prismodell."
+          ],
+          "recommendation": "IKKE bygg MVP nå. Kjør sekvensiell billig validering (rekkefølge = drep raskest og billigst først): 1) Juridisk desk-research (1–2 dager): Er digitalt delt testament/arveinfo brukbart i Norge? Hvis nei uten notar/advokat, snevres verdiforslaget kraftig inn – vurder kill. 2) Betalingsvilje-test (1–2 uker): landingsside med konkret pris (f.eks. 79 kr/mnd) + forhåndsbetaling/venteliste mot 45+ og 'organiserer for foreldre'-segment. Mål faktisk kortinngang, ikke bare klikk. 3) Utløser-validering: intervju 2–3 begravelsesbyråer/forsikringsselskap om partnerskap OG hvordan de i praksis verifiserer død. Gå kun videre hvis alle tre passerer. Sett hard kill-terskel på betalingsvilje-testen (f.eks. <1% konvertering til betalt intent = kill).",
+          "certainty": "middels",
+          "probability_success": 0.15
+        },
+        {
+          "roleId": "cf_kunde",
+          "roleTitle": "Kundeinnsiktsansvarlig",
+          "weight": 1,
+          "position": "Skeptisk – problemet er reelt, men kjøpsdynamikken (lav opplevd hastegrad + betaler ≠ bruker) gjør dette til en vanskelig frivillig abonnementssak. Bør ikke bygges før betalingsvilje og churn er validert.",
+          "strongest_argument_against": "Dette er en 'håper å aldri trenge'-tjeneste med lav bruksfrekvens. Verdien realiseres først ved en hendelse brukeren nekter å tenke på. Det gir tre dødelige kombinasjoner: (1) lav opplevd hastegrad → svak konvertering, (2) ingen daglig bruk → høy churn på månedsabonnement, (3) den som har mest nytte (pårørende) er ikke den som må gjøre jobben med å legge inn data (avdøde/syke). Klassisk 'vitamin, ikke smertestillende' – folk anerkjenner problemet men utsetter i det uendelige. Sammenlign med hvor få som faktisk skriver testament selv om alle vet de burde.",
+          "top_risks": [
+            "Betalingsvilje er ren antakelse. 'Anerkjenner problem' ≠ 'betaler månedlig'. Krever direkte validering før noe bygges.",
+            "Høy churn: uten daglig verdi vil månedlig abonnement oppleves som unødvendig utgift → oppsigelse etter noen måneder. Abonnementsmodellen kan være feil; engangs/årsavgift via mellommann kan passe bedre.",
+            "Betaler-bruker-mismatch: uklart om det er brukeren selv eller pårørende som betaler og legger inn data. Dette avgjør hele go-to-market og er uavklart.",
+            "Adopsjonsfriksjon: å legge inn sensitiv info krever betydelig innsats i en 'ubehagelig' oppgave folk utsetter – lav aktiveringsrate selv blant betalende.",
+            "Tillit/personvern som kjøpsbarriere: å gi en ukjent startup passord, testament og kontodetaljer er en enorm tillitsbarriere for nettopp 45+-segmentet."
+          ],
+          "recommendation": "IKKE bygg MVP ennå. Kjør billig etterspørselstest først: (1) 15–20 kundeintervjuer fordelt på antatte segmenter (45+ med familie, pårørende som organiserer for foreldre, kronisk syke) for å måle faktisk opplevd smerte og hvem som ville betalt. (2) Én-side landingsside med konkret pris (test både 49 kr/mnd og 490 kr/år) og 'forhåndsbestill'-knapp mot betalt trafikk – mål reell klikk-til-betaling, ikke bare interesse. (3) Test kanalhypotesen ved å kontakte 3–5 begravelsesbyråer/forsikringsselskap: vil de distribuere/bundle? Hvis B2B2C-kanal er villig, endres hele saken. Gå videre kun hvis intervjuene viser at et konkret segment beskriver dette som akutt smerte OG landingssiden gir målbar betalingsintensjon.",
+          "certainty": "middels",
+          "probability_success": 0.25
+        },
+        {
+          "roleId": "cf_sikkerhet",
+          "roleTitle": "Sikkerhetsansvarlig",
+          "weight": 1,
+          "position": "Betinget skeptisk – kritiske sikkerhets- og misbruksantakelser er uløste og potensielt showstoppere før noen linje kode skrives.",
+          "strongest_argument_against": "Kjernemekanismen – verifisert frigivelse av høysensitiv data ved 'død/alvorlig sykdom' – er selve produktet OG den største angrepsflaten. En feilaktig utløser (svindler som melder falsk dødsfall, social engineering mot support) gir uautorisert tilgang til passord, bankkontoer og testament for en levende person. Dette er ikke en edge-case, men et sannsynlig og attraktivt angrepsmål. Hvis utløser-verifisering ikke kan gjøres robust og billig, bør tjenesten ikke bygges.",
+          "top_risks": [
+            "Utløser-misbruk: falsk dødsmelding/social engineering frigir alt til uvedkommende. Fakta som må valideres: kan man koble til autoritativ kilde (Folkeregisteret/skifteattest) i stedet for manuell/selvmeldt trigger?",
+            "Konsentrert honeypot-risiko: én database med passord + bank + forsikring + testament er ekstremt attraktiv for angripere. Ett brudd = katastrofalt tap av tillit og potensielt eksistenstruende erstatningsansvar.",
+            "Persondata/GDPR: helsedata (alvorlig sykdom) = særlig kategori (art. 9), krever eksplisitt behandlingsgrunnlag, DPIA er reelt påkrevd. Behandling av data om mottakere som ikke er kunder er også uavklart.",
+            "Juridisk gyldighet (systemantakelse, må valideres eksternt): et digitalt lagret testament er sannsynligvis IKKE formgyldig etter norsk arvelov (krav om vitner/signatur). Da faller en av de påståtte kjerneverdiene bort.",
+            "Betalingssikkerhet og drift: PCI-scope hvis egen kortlagring – unngås ved Stripe/betalingsleverandør. Håndterbart, lav prioritet vs. de over.",
+            "Nøkkelhåndtering: hvis leverandøren kan dekryptere for å frigi til mottaker, kan leverandøren (og angripere med tilgang) også lese alt. Ekte zero-knowledge kompliserer frigivelse ved død. Denne motsetningen er uløst i MVP-skissen."
+          ],
+          "recommendation": "IKKE bygg kryptert lagring ennå. Kjør tre billige de-riskings-tester først: (1) Juridisk avklaring (noen timer advokat): er digitalt delt testament/fullmakt gyldig og brukbart i norsk arveoppgjør? Hvis nei, snevre scopet til 'oversikt/instruksjoner' ikke 'juridiske dokumenter'. (2) Design utløser-mekanismen på papir og angrip den (red-team): kan den kobles til skifteattest/Folkeregisteret fremfor manuell trigger? Uten en misbruksresistent trigger er produktet ikke forsvarlig. (3) Kjør en DPIA-skisse for å avdekke om helsedata/tredjepartsdata gjør compliance uforholdsmessig tung. Krav til eventuell MVP: klientside-kryptering, ingen egen kortlagring (bruk Stripe), autoritativ dødsverifisering, og eksplisitt begrensning bort fra data som gir juridisk falsk trygghet.",
+          "certainty": "middels",
+          "probability_success": null
+        },
+        {
+          "roleId": "cf_marked",
+          "roleTitle": "Markedsanalytiker",
+          "weight": 1,
+          "position": "Skeptisk til at dette bør bygges nå. Problemet er reelt, men markedsanalysen avdekker to strukturelle svakheter: (1) allerede eksisterende, godt finansierte konkurrenter (passordforvaltere med legacy/arvefunksjon som 1Password, LastPass, Google Inactive Account Manager, samt nordiske aktører som Digitalt dødsbo/Lifekeys og bankenes/forsikringens 'oversikt ved død'-tjenester), og (2) lav opplevd hastegrad som gir svak konverterings- og retensjonsdynamikk. Dette er et 'vitamin, ikke smertestillende'-produkt for de fleste før en hendelse inntreffer.",
+          "strongest_argument_against": "Verdien realiseres først ved en sjelden, uønsket hendelse (død/sykdom), mens betalingen skjer løpende i årevis før. Det gir strukturelt lav betalingsvilje og høy churn – brukeren ser aldri verdien, bare kostnaden. Kombinert med at Google, Apple og passordforvaltere allerede tilbyr 'legacy contact'/arvefunksjoner gratis eller som del av eksisterende abonnement, er det uklart hvorfor noen skal bytte til eller betale ekstra for en frittstående tjeneste. Distribusjonen for de troverdige kanalene (bank, forsikring, begravelsesbyrå) eies av aktører som selv kan bygge dette inn.",
+          "top_risks": [
+            "Etablert gratis/inkludert konkurranse: Google Inactive Account Manager, Apple Legacy Contact og legacy-funksjoner i passordforvaltere dekker kjernebehovet uten ekstra betaling – krever ekstern validering av faktisk dekningsgrad i Norden.",
+            "Byttekostnad/motivasjon mangler: uten en akutt trigger er det ingen sterk grunn til å bytte fra 'ingenting' eller fra dagens gratisløsninger; kundeanskaffelse blir dyr relativt til lav LTV.",
+            "Kanalavhengighet og kopieringsrisiko: de eneste kanalene med troverdighet (bank, forsikring, begravelsesbyrå, arveadvokat) er selv naturlige eiere av dette og kan kopiere eller bygge inn funksjonen – lav teknisk moat.",
+            "Retensjon: 'sjelden brukt' tjeneste gir høy churn og svakt abonnementsgrunnlag med mindre man skaper løpende bruksverdi utover ren lagring.",
+            "Ukjent markedsstørrelse i Norden – hele forretningscaset hviler på uvaliderte antakelser om betalingsvilje og segmentstørrelse."
+          ],
+          "recommendation": "Ikke bygg ennå. Kjør billig markeds-/etterspørselstest før utvikling: (1) Kartlegg 30 min hva Google/Apple/passordforvaltere og nordiske aktører (Lifekeys, bankenes dødsbotjenester, begravelsesbyråer) allerede dekker gratis – hvis kjernebehovet er dekket, avvikle. (2) Fake-door/landingsside med konkret pris (f.eks. 79 kr/mnd) mot 45+ og mot 'pårørende som organiserer for foreldre' for å måle klikk→betalingsintensjon. (3) 5–8 samtaler med begravelsesbyrå/arveadvokat for å avdekke om de vil distribuere og om delt info (testament/kontoer) faktisk er juridisk brukbar. Beslutt kun videre hvis både betalingsvilje og en kanal med lav CAC bekreftes.",
+          "certainty": "middels",
+          "probability_success": 0.2
+        },
+        {
+          "roleId": "cf_merkevare",
+          "roleTitle": "Merkevarestrateg",
+          "weight": 1,
+          "position": "Kategorien «digitalt hvelv for pårørende» er troverdig, men posisjoneringen har en innebygd konflikt: løftet handler om trygghet ved død/sykdom, mens brukeren i det daglige opplever null hastegrad. Dette gjør merkevaren vanskelig å selge og enda vanskeligere å beholde. Kategorivalget bør avgjøres bevisst: (A) «digital arv/etterlatt-oversikt» (emosjonelt, lav frekvens, høy churn) eller (B) «passordhvelv med etterlatt-funksjon» (daglig nytte + etterlatt som ekstra verdi). Alternativ B gir en grunn til å bruke og betale i dag, og løser churn-problemet – men da konkurrerer man mot etablerte passordforvaltere.",
+          "strongest_argument_against": "Merkevaren må selge en tjeneste man «håper å aldri trenge», uten daglig berøringspunkt. Uten en grunn til å logge inn jevnlig blir opplevd verdi lav, churn høy, og kommunikasjonen tvinges over i angst-/skyldbasert copy («hva skjer med familien din?») – en tone som skaper unngåelse, ikke konvertering. Det finnes ingen troverdig, ikke-manipulativ posisjonering som samtidig løser lav opplevd hastegrad.",
+          "top_risks": [
+            "Løfte-troverdighet: kjerneløftet «informasjonen frigis trygt ved død/sykdom» avhenger av en verifisert utløser og juridisk gyldighet som ikke er bevist. Hvis dette ikke holder, er hele merkevareløftet falskt og uforsvarlig å kommunisere.",
+            "Uklar betaler vs. bruker splitter tone of voice og kanal: markedsføring mot 45+ (frykt/ansvar) vs. mot organiserende pårørende (praktisk avlastning) krever ulik posisjonering – man kan ikke gjøre begge troverdig samtidig i MVP.",
+            "Kategori-forvirring: uten valg mellom «arv-tjeneste» og «passordhvelv+» blir differensieringen svak og man taper mot både passordforvaltere (daglig nytte) og begravelsesbyrå/advokat (autoritet ved død).",
+            "Tone-fellen: temaet trekker mot floskler og angstsalg. Uten konkret, nøktern copy basert på reelle etterlatt-situasjoner mister merket tillit i akkurat den kategorien der tillit er alt."
+          ],
+          "recommendation": "Ikke bygg på merkevareløftet ennå. Billigste test først: to landingssider med ulik posisjonering – (A) «etterlatt-oversikt / digital arv» og (B) «passordhvelv med etterlatt-tilgang» – mot to segmenter (bruker 45+ vs. organiserende pårørende). Mål CTR, e-postregistrering og betalingssignal (fiktiv pris). Parallelt må juridisk gyldighet av delt info og utløsermekanisme avklares FØR noe løfte kommuniseres – uten dette er merkevaren ikke troverdig. Velg kategori basert på hvilken landingsside som konverterer, ikke på idébeskrivelsen.",
+          "certainty": "middels",
+          "probability_success": null
+        }
+      ],
+      "synthesis": {
+        "summary": "Digital hvelvtjeneste for lagring av passord, kontoer, forsikringer og testament som frigis til pårørende ved verifisert død/sykdom. Problemet er reelt og gjenkjennbart, men tre uavhengige, potensielt dødelige antakelser er uvaliderte: (1) juridisk brukbarhet av digitalt delt testament/arveinfo i Norge, (2) misbruksresistent utløsermekanisme for dødsverifisering, og (3) betalingsvilje for en lav-frekvent 'håper å aldri trenge'-tjeneste med høy churn-risiko. I tillegg finnes gratis/inkluderte substitutter (Google Inactive Account Manager, Apple Legacy Contact, legacy-funksjoner i passordforvaltere). Alle fem roller anbefaler uavhengig: ikke bygg ennå, valider billig først.",
+        "scorecard": [
+          {
+            "criterion": "problemsmerte",
+            "score": 5,
+            "reasoning": "Problemet er reelt og gjenkjennbart (fakta fra beslektede markeder), men opplevd hastegrad i daglig bruk er lav – dette er 'vitamin, ikke smertestillende' for de fleste før en hendelse. Smerten er akutt for pårårende ETTER en hendelse, men da er det for sent å opprette tjenesten. Middels score reflekterer reell, men latent smerte."
+          },
+          {
+            "criterion": "frekvens",
+            "score": 2,
+            "reasoning": "Kjerneverdien realiseres ved en sjelden, uønsket hendelse. Informasjonen må oppdateres periodisk, men brukeren har ingen daglig grunn til å logge inn. Lav frekvens er strukturelt og driver churn – en av de sterkeste svakhetene."
+          },
+          {
+            "criterion": "betalingsvilje",
+            "score": 3,
+            "reasoning": "Ren antakelse – ingen priser eller betalingssignaler oppgitt. Sammenlignbare tjenester tar 30–150 kr/mnd, men 'anerkjenner problem' ≠ 'betaler månedlig'. Gratis substitutter presser betalingsviljen mot null. Krever direkte validering; lav score pga. usikkerhet og substitusjonstrussel."
+          },
+          {
+            "criterion": "markedsstørrelse",
+            "score": 4,
+            "reasoning": "Ukjent i Norden. Beslektede markeder finnes internasjonalt, men segmentstørrelse og reell adresserbar betalende masse er uvalidert. Antatte segmenter (45+, kronisk syke, organiserende pårørende) er plausible men uavklart. Middels-lav pga. manglende data."
+          },
+          {
+            "criterion": "differensiering",
+            "score": 3,
+            "reasoning": "Svak teknisk moat. Utløsermekanismen KAN være differensiator hvis den kobles til autoritativ kilde (Folkeregister/skifteattest), men dette er ubevist. Google/Apple/passordforvaltere dekker mye gratis. Kanaleiere (bank, forsikring, begravelsesbyrå) kan selv bygge dette inn."
+          },
+          {
+            "criterion": "gjennomførbarhet",
+            "score": 3,
+            "reasoning": "Teknisk lagring er enkel, men de vanskelige delene – misbruksresistent dødsverifisering, zero-knowledge vs. frigivelse-motsetningen, GDPR art. 9 helsedata, DPIA – er tunge og potensielt showstoppere. Dårlig match med 'lave faste kostnader/enkel drift'."
+          },
+          {
+            "criterion": "tid_til_marked",
+            "score": 4,
+            "reasoning": "Enkel MVP (kryptert lagring + mottakere + manuell trigger) kan bygges raskt, MEN en forsvarlig versjon krever juridisk avklaring, robust utløser og compliance – dette forlenger reell tid til et produkt som faktisk holder løftet."
+          },
+          {
+            "criterion": "gjentakende_inntekt",
+            "score": 4,
+            "reasoning": "Teoretisk godt egnet for abonnement (info må holdes oppdatert), men lav bruksfrekvens undergraver retensjon. Abonnementsmodellen kan være feil match; engangs/årsavgift eller B2B2C-bundling kan passe bedre. Potensial finnes, men churn-risiko trekker kraftig ned."
+          },
+          {
+            "criterion": "automatiseringsgrad",
+            "score": 4,
+            "reasoning": "Lagring og oppdatering kan automatiseres, men den kritiske utløsermekanismen (dødsverifisering) og misbrukshåndtering krever sannsynligvis manuell verifisering/support med mindre autoritativ datakilde er tilgjengelig. Support på sensitiv data er risikabelt og arbeidskrevende."
+          },
+          {
+            "criterion": "forsvarbarhet",
+            "score": 2,
+            "reasoning": "Lav teknisk moat, gratis substitutter fra store aktører, og kanaleiere som kan kopiere. Eneste mulige forsvarsverk er partnerskap/regulatorisk integrasjon (Folkeregister) eller tillit/merkevare – ingen av disse er etablert. Svakeste dimensjon sammen med frekvens."
+          }
+        ],
+        "score_drivers_up": [
+          "Reelt, gjenkjennbart problem med emosjonell tyngde",
+          "Naturlig behov for periodisk oppdatering gir teoretisk abonnementslogikk",
+          "Mulige høy-troverdighet-kanaler (bank, forsikring, begravelsesbyrå) hvis B2B2C fungerer",
+          "Enkel teknisk kjerne for lagring"
+        ],
+        "score_drivers_down": [
+          "Lav bruksfrekvens → høy churn (strukturell svakhet)",
+          "Gratis/inkluderte substitutter fra Google, Apple, passordforvaltere",
+          "Uvalidert juridisk gyldighet av digitalt delt testament i Norge",
+          "Misbruksutsatt utløsermekanisme (falsk dødsmelding/social engineering)",
+          "GDPR art. 9 helsedata + honeypot-risiko = tung compliance og katastrofal nedside",
+          "Betaler ≠ bruker: uavklart go-to-market",
+          "Betalingsvilje er ren antakelse uten signaler"
+        ],
+        "weaknesses": [
+          "Kjerneverdien realiseres kun ved en hendelse brukeren håper aldri skjer – lav opplevd hastegrad ved kjøp og høy churn i drift",
+          "Utløsermekanismen er både produktets kjerne og største angrepsflate; uløst i MVP-skissen",
+          "Digitalt delt testament er sannsynligvis IKKE formgyldig etter norsk arvelov – risiko for å selge falsk trygghet",
+          "Zero-knowledge-kryptering står i motsetning til å kunne frigi data ved død – uløst designkonflikt",
+          "Konsentrert honeypot av passord+bank+forsikring+testament gir eksistenstruende bruddrisiko",
+          "Uklar kategoriposisjonering (arv-tjeneste vs. passordhvelv+) svekker differensiering og tone of voice",
+          "Kanaleiere kan selv bygge/kopiere funksjonen – lav forsvarbarhet"
+        ],
+        "improvements": [
+          "Snevre scope bort fra juridiske dokumenter (testament) til 'oversikt/instruksjoner' hvis juridisk avklaring er negativ – reduserer ansvarsrisiko",
+          "Vurder kategori B: 'passordhvelv med etterlatt-tilgang' som gir daglig bruksverdi og løser churn – men konkurrer da bevisst mot etablerte",
+          "Koble utløser til autoritativ kilde (Folkeregister/skifteattest) fremfor manuell/selvmeldt trigger",
+          "Vurder B2B2C-modell (bundle via bank/forsikring/begravelsesbyrå) for lavere CAC og innebygd tillit",
+          "Test årsavgift/engangsmodell som alternativ til månedsabonnement gitt lav frekvens",
+          "Bruk Stripe (ingen egen kortlagring) og klientside-kryptering hvis MVP bygges"
+        ],
+        "alternative_ideas": [
+          "Ren B2B-tjeneste solgt til begravelsesbyråer/arveadvokater som verktøy for å organisere dødsbo (betaler er profesjonell, ikke sluttbruker)",
+          "'Etterlatt-sjekkliste og oversikt' som digital tjeneste uten sensitiv datalagring – lavere risiko, lavere verdi, men billigere å teste",
+          "Integrasjon/partnerskap med eksisterende passordforvalter for norsk arve-/etterlatt-modul i stedet for frittstående produkt",
+          "Fokus på 'organiserende pårørende for eldre foreldre'-segment med praktisk avlastning som kjerneløfte fremfor bruker-selv"
+        ],
+        "scenarios": [
+          {
+            "name": "Beste tilfelle",
+            "probability": 0.15,
+            "outcome": "Juridisk avklaring er akseptabel med snevret scope, en B2B2C-kanal (f.eks. forsikring/begravelsesbyrå) bekrefter distribusjonsvilje, og landingsside viser målbar betalingsintensjon. Produktet posisjoneres med daglig bruksverdi eller lav-CAC-kanal som demper churn.",
+            "value_estimate": "Nisje-SaaS/B2B2C med moderat MRR; realistisk lav-til-middels ARR over 2–3 år, avhengig av kanalpartner"
+          },
+          {
+            "name": "Sannsynlig tilfelle",
+            "probability": 0.55,
+            "outcome": "Betalingsvilje-test og/eller juridisk avklaring underleverer: lav konvertering pga. lav hastegrad og gratis substitutter, eller digitalt testament er ikke brukbart. Konseptet må enten snevres kraftig eller endres til B2B/annen modell.",
+            "value_estimate": "Marginalt til ikke-levedyktig som frittstående B2C-abonnement uten pivot"
+          },
+          {
+            "name": "Dårligste tilfelle",
+            "probability": 0.3,
+            "outcome": "Juridisk gyldighet faller, utløsermekanisme viser seg misbruksutsatt/uforsvarlig, og betalingsvilje er tilnærmet null mot gratis substitutter. Produktet ville gitt falsk trygghet og eksistenstruende ansvarsrisiko.",
+            "value_estimate": "Null / negativ (tapt utviklings- og compliance-kostnad)"
+          }
+        ],
+        "decision": "valider_mer",
+        "decision_rationale": "Alle fem roller anbefaler uavhengig samme kurs: ikke bygg, valider billig først. Tre uavhengige antakelser – juridisk brukbarhet, misbruksresistent utløser og betalingsvilje/churn – kan hver for seg drepe konseptet, og ingen er testet. Kostnaden ved validering er lav og rask; kostnaden ved å bygge (compliance, sikkerhet, honeypot-ansvar) er høy. Riktig grep er sekvensiell de-risking med harde kill-terskler, ikke MVP. Sett rekkefølgen slik at det som dreper billigst og raskest testes først (juridisk desk-research).",
+        "certainty": "middels",
+        "assumptions_to_validate": [
+          {
+            "claim": "Digitalt delt testament/arveinformasjon er juridisk gyldig og praktisk brukbart i norsk arveoppgjør",
+            "test": "Juridisk desk-research + 1–2 timer med arveadvokat om formkrav i arveloven",
+            "threshold": "Hvis testament ikke er formgyldig uten vitner/notar: snevre scope til 'oversikt/instruksjoner' eller vurder kill av arve-verdiforslaget",
+            "cost_estimate": "Lav (noen timer + evt. 1 advokatkonsultasjon)",
+            "horizon": "1–3 dager"
+          },
+          {
+            "claim": "Et konkret segment har målbar betalingsintensjon for tjenesten",
+            "test": "Landingsside med to posisjoneringer (arv-oversikt vs. passordhvelv+) og konkret pris (test 79 kr/mnd og 490 kr/år) mot betalt trafikk til 45+ og 'organiserer for foreldre'; mål klikk→betalt intent, ikke bare interesse",
+            "threshold": "Kill hvis <1% konvertering til betalt intent; gå videre kun ved klart målbar betalingssignal i minst ett segment",
+            "cost_estimate": "Lav-middels (annonsebudsjett + enkel landingsside)",
+            "horizon": "1–2 uker"
+          },
+          {
+            "claim": "Utløsermekanismen kan gjøres misbruksresistent, helst koblet til autoritativ kilde",
+            "test": "Design trigger på papir og red-team den; intervju 3–5 begravelsesbyrå/forsikring om praktisk dødsverifisering og distribusjonsvilje; undersøk tilgang til Folkeregister/skifteattest",
+            "threshold": "Må finnes en misbruksresistent verifiseringsvei uten manuell selvmeldt trigger; ellers ikke forsvarlig å bygge",
+            "cost_estimate": "Lav (intervjuer + desk-research)",
+            "horizon": "1–2 uker"
+          },
+          {
+            "claim": "Kjernebehovet er ikke allerede dekket gratis av eksisterende aktører",
+            "test": "Kartlegg dekningsgrad for Google Inactive Account Manager, Apple Legacy Contact, passordforvalteres legacy-funksjoner og nordiske aktører (Lifekeys, bankenes dødsbotjenester)",
+            "threshold": "Avvikle hvis kjernebehovet er tilstrekkelig dekket gratis for målsegmentet",
+            "cost_estimate": "Svært lav (research)",
+            "horizon": "1 dag"
+          }
+        ]
+      },
+      "totalScore": 35,
+      "at": "2026-07-14T17:34:57.703Z"
+    },
+    "brief": null,
+    "gates": {
+      "validering godkjent for MVP": {
+        "approved": true,
+        "byOwner": true,
+        "at": "2026-07-14T18:39:05.444Z"
+      }
+    },
+    "experiments": [
+      {
+        "id": "emrkxz6xm0",
+        "claim": "Digitalt delt testament/arveinformasjon er juridisk gyldig og praktisk brukbart i norsk arveoppgjør",
+        "test": "Juridisk desk-research + 1–2 timer med arveadvokat om formkrav i arveloven",
+        "threshold": "Hvis testament ikke er formgyldig uten vitner/notar: snevre scope til 'oversikt/instruksjoner' eller vurder kill av arve-verdiforslaget",
+        "cost_estimate": "Lav (noen timer + evt. 1 advokatkonsultasjon)",
+        "horizon": "1–3 dager",
+        "status": "planlagt",
+        "result": "",
+        "passed": null,
+        "at": null
+      },
+      {
+        "id": "emrkxz6xm1",
+        "claim": "Et konkret segment har målbar betalingsintensjon for tjenesten",
+        "test": "Landingsside med to posisjoneringer (arv-oversikt vs. passordhvelv+) og konkret pris (test 79 kr/mnd og 490 kr/år) mot betalt trafikk til 45+ og 'organiserer for foreldre'; mål klikk→betalt intent, ikke bare interesse",
+        "threshold": "Kill hvis <1% konvertering til betalt intent; gå videre kun ved klart målbar betalingssignal i minst ett segment",
+        "cost_estimate": "Lav-middels (annonsebudsjett + enkel landingsside)",
+        "horizon": "1–2 uker",
+        "status": "planlagt",
+        "result": "",
+        "passed": null,
+        "at": null
+      },
+      {
+        "id": "emrkxz6xm2",
+        "claim": "Utløsermekanismen kan gjøres misbruksresistent, helst koblet til autoritativ kilde",
+        "test": "Design trigger på papir og red-team den; intervju 3–5 begravelsesbyrå/forsikring om praktisk dødsverifisering og distribusjonsvilje; undersøk tilgang til Folkeregister/skifteattest",
+        "threshold": "Må finnes en misbruksresistent verifiseringsvei uten manuell selvmeldt trigger; ellers ikke forsvarlig å bygge",
+        "cost_estimate": "Lav (intervjuer + desk-research)",
+        "horizon": "1–2 uker",
+        "status": "planlagt",
+        "result": "",
+        "passed": null,
+        "at": null
+      },
+      {
+        "id": "emrkxz6xm3",
+        "claim": "Kjernebehovet er ikke allerede dekket gratis av eksisterende aktører",
+        "test": "Kartlegg dekningsgrad for Google Inactive Account Manager, Apple Legacy Contact, passordforvalteres legacy-funksjoner og nordiske aktører (Lifekeys, bankenes dødsbotjenester)",
+        "threshold": "Avvikle hvis kjernebehovet er tilstrekkelig dekket gratis for målsegmentet",
+        "cost_estimate": "Svært lav (research)",
+        "horizon": "1 dag",
+        "status": "planlagt",
+        "result": "",
+        "passed": null,
+        "at": null
+      }
+    ]
+  },
+  "cf_lessons": [],
+  "cf_library": [],
+  "cf_activity": [
+    {
+      "id": "amrkzw73b8",
+      "at": "2026-07-14T18:39:05.447Z",
+      "type": "eier",
+      "message": "[En abbonementstjeneste hvor man kan lagr] PORT GODKJENT: validering godkjent for MVP",
+      "projectId": "pmrkxh3i25td"
+    },
+    {
+      "id": "amrkxz6xm7",
+      "at": "2026-07-14T17:45:25.978Z",
+      "type": "beslutning",
+      "message": "[En abbonementstjeneste hvor man kan lagr] Eksperimentkø opprettet (4 tester)",
+      "projectId": "pmrkxh3i25td"
+    },
+    {
+      "id": "amrkxncwx6",
+      "at": "2026-07-14T17:36:13.857Z",
+      "type": "beslutning",
+      "message": "[En abbonementstjeneste hvor man kan lagr] Faseplan opprettet",
+      "projectId": "pmrkxh3i25td"
+    },
+    {
+      "id": "amrkxlq5l5",
+      "at": "2026-07-14T17:34:57.705Z",
+      "type": "beslutning",
+      "message": "[En abbonementstjeneste hvor man kan lagr] Idévurdering: VALIDER_MER (score 35/100)",
+      "projectId": "pmrkxh3i25td"
+    },
+    {
+      "id": "amrkxi43f4",
+      "at": "2026-07-14T17:32:09.147Z",
+      "type": "beslutning",
+      "message": "[En abbonementstjeneste hvor man kan lagr] Idé strukturert – godkjent for analyse",
+      "projectId": "pmrkxh3i25td"
+    },
+    {
+      "id": "amrkxh3i23",
+      "at": "2026-07-14T17:31:21.722Z",
+      "type": "prosjekt",
+      "message": "Prosjekt opprettet: En abbonementstjeneste hvor man kan lagr",
+      "projectId": null
+    },
+    {
+      "id": "amrkxgi1c2",
+      "at": "2026-07-14T17:30:53.904Z",
+      "type": "idé",
+      "message": "Idé fanget i innboksen: En abbonementstjeneste hvor man kan lagre viktig informasjon",
+      "projectId": null
+    },
+    {
+      "id": "amrkx69cf1",
+      "at": "2026-07-14T17:22:56.079Z",
+      "type": "synk",
+      "message": "Data pushet til jonathanfoss-commits/factory-data",
+      "projectId": null
+    },
+    {
+      "id": "amrkx4m5o0",
+      "at": "2026-07-14T17:21:39.372Z",
+      "type": "synk",
+      "message": "Data pushet til jonathanfoss-commits/factory-data",
+      "projectId": null
+    }
+  ],
+  "cf_costs": [
+    {
+      "at": "2026-07-14T20:19:36.405Z",
+      "label": "assistent-dokk",
+      "projectId": null,
+      "in": 6846,
+      "out": 335
+    },
+    {
+      "at": "2026-07-14T20:19:30.647Z",
+      "label": "assistent-dokk",
+      "projectId": null,
+      "in": 6617,
+      "out": 128
+    },
+    {
+      "at": "2026-07-14T17:36:13.855Z",
+      "label": "faseplan",
+      "projectId": "pmrkxh3i25td",
+      "in": 5056,
+      "out": 4480
+    },
+    {
+      "at": "2026-07-14T17:34:57.699Z",
+      "label": "idévurdering",
+      "projectId": "pmrkxh3i25td",
+      "in": 9604,
+      "out": 4716
+    },
+    {
+      "at": "2026-07-14T17:33:27.170Z",
+      "label": "idévurdering",
+      "projectId": "pmrkxh3i25td",
+      "in": 2265,
+      "out": 1296
+    },
+    {
+      "at": "2026-07-14T17:33:25.120Z",
+      "label": "idévurdering",
+      "projectId": "pmrkxh3i25td",
+      "in": 2265,
+      "out": 1145
+    },
+    {
+      "at": "2026-07-14T17:32:59.930Z",
+      "label": "idévurdering",
+      "projectId": "pmrkxh3i25td",
+      "in": 2265,
+      "out": 1225
+    },
+    {
+      "at": "2026-07-14T17:32:56.343Z",
+      "label": "idévurdering",
+      "projectId": "pmrkxh3i25td",
+      "in": 2268,
+      "out": 1208
+    },
+    {
+      "at": "2026-07-14T17:32:55.881Z",
+      "label": "idévurdering",
+      "projectId": "pmrkxh3i25td",
+      "in": 2266,
+      "out": 1097
+    },
+    {
+      "at": "2026-07-14T17:32:27.184Z",
+      "label": "idévurdering",
+      "projectId": "pmrkxh3i25td",
+      "in": 2689,
+      "out": 827
+    },
+    {
+      "at": "2026-07-14T17:32:09.145Z",
+      "label": "inntak",
+      "projectId": "pmrkxh3i25td",
+      "in": 1555,
+      "out": 1964
+    }
+  ],
+  "exported": "2026-07-14T20:28:55.688Z"
+}
