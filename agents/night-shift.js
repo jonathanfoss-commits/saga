@@ -29,6 +29,8 @@ async function run() {
     guard();
     /* Selskapsstatus FØR styremøtet: styret skal se ferske, kildemerkede tall */
     await require("./etterpaa-status").run();
+    /* CFO før styremøtet: oppdaterer kumulativ kost pr. selskap (eksperimenttaket) */
+    const pnlStatus = require("./cfo").run();
     const board = await require("./board-meeting").run();
     const radar = await require("./radar").run();
 
@@ -55,6 +57,15 @@ async function run() {
         { title: "Styremøtet", lines: (board.protocol || board.note || "").split("\n").filter(Boolean).slice(0, 8) },
         { title: "Radar", lines: (radar.findings || "").split("\n").filter(Boolean).slice(0, 6) },
         { title: "Grunnlovsjekk", lines: policyLines.slice(0, 6) },
+        { title: "CFO", lines: [
+          `Måned ${pnlStatus.month}: kost ${pnlStatus.totals.costNok} kr · inntekt ${pnlStatus.totals.revenueNok} kr${pnlStatus.totals.revenueNok === 0 ? " (FAKTISK – ingen betalingsløsning i drift)" : ""} · netto ${pnlStatus.totals.netNok} kr`,
+          pnlStatus.frame.maxNok !== null
+            ? `Ramme: ${pnlStatus.frame.usedPct} % av ${pnlStatus.frame.maxNok} kr/mnd (grunnloven)`
+            : "Ramme ukjent – privat grunnlov mangler i sannhetslaget.",
+          pnlStatus.runwayMonths !== null
+            ? `Runway: ~${pnlStatus.runwayMonths} mnd på engangskapitalen ved dagens netto (ESTIMAT)`
+            : "Runway: ikke beregnbar (positiv drift eller ukjent kapital).",
+        ] },
       ],
       actions: board.projects
         ? [{ title: "Les protokollen og radar-funnene – godkjenn/avvis i appen", why: "Agentene beslutter aldri på dine vegne." }]
