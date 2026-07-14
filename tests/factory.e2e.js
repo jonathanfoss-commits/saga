@@ -346,7 +346,7 @@ async function freshPage(browser) {
 }
 
 (async () => {
-  const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+  const browser = await chromium.launch({ executablePath: process.env.SAGA_CHROMIUM || undefined });
 
   /* ---------- Scenario 1: full pipeline, sterk idé → MVP ---------- */
   console.log("FACTORY 1: idé → inntak → styret → score → beslutning → plan → brief");
@@ -1042,7 +1042,10 @@ print('OK', len(names))
     await page.fill("#ghPat", "bad-pat");
     await page.click("#ghSaveBtn");
     await page.click("#syncPushBtn");
-    await page.waitForFunction(() => document.getElementById("syncStatus").textContent.includes("PAT"), null, { timeout: 5000 });
+    /* Vent på selve push-feilen («Feil: … PAT …»), ikke lagre-advarselen som også
+     * inneholder «PAT» – ellers kan feilhåndteringens re-render tilbakestille
+     * PAT-feltet til bad-pat etter at testen har fylt inn good-pat (race). */
+    await page.waitForFunction(() => { const t = document.getElementById("syncStatus").textContent; return t.includes("Feil") && t.includes("PAT"); }, null, { timeout: 5000 });
     check("ugyldig PAT gir handlingsrettet feilmelding", true, null);
     await page.fill("#ghPat", "good-pat");
     await page.click("#ghSaveBtn");

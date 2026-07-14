@@ -46,7 +46,7 @@ function aeisHandler(route) {
 }
 
 (async () => {
-  const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+  const browser = await chromium.launch({ executablePath: process.env.SAGA_CHROMIUM || undefined });
 
   /* ---------- OS 1: skallet – flater, palett, dyp-lenker ---------- */
   console.log("OS 1: én dør – alle flater, palett og dyp-lenker");

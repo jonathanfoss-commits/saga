@@ -55,7 +55,7 @@ async function freshPage(browser) {
 }
 
 (async () => {
-  const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+  const browser = await chromium.launch({ executablePath: process.env.SAGA_CHROMIUM || undefined });
 
   /* ---------------- Scenario 1: plain streamed text ---------------- */
   console.log("Scenario 1: plain text response");
