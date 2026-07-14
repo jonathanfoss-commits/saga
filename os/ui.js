@@ -209,6 +209,12 @@ async function renderAgenda() {
         if (f) agendaCache = JSON.parse(f.content);
       } catch { /* tom tilstand under */ }
     }
+    if (!agendaCache) {
+      try {
+        const r = await fetch("data/agenda.json", { cache: "no-store" });
+        if (r.ok) agendaCache = await r.json();
+      } catch { /* offline/lokalt uten data */ }
+    }
   }
   const open = ((agendaCache && agendaCache.items) || []).filter((i) => !["gjort", "avvist"].includes(i.status));
   if (!open.length) {
