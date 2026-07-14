@@ -782,6 +782,13 @@
   "cf_library": [],
   "cf_activity": [
     {
+      "id": "amrl3th0v9",
+      "at": "2026-07-14T20:28:56.815Z",
+      "type": "synk",
+      "message": "Data pushet til jonathanfoss-commits/saga",
+      "projectId": null
+    },
+    {
       "id": "amrkzw73b8",
       "at": "2026-07-14T18:39:05.447Z",
       "type": "eier",
@@ -924,5 +931,5 @@
       "out": 1964
     }
   ],
-  "exported": "2026-07-14T20:28:55.688Z"
+  "exported": "2026-07-14T20:36:08.726Z"
 }
