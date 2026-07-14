@@ -140,8 +140,49 @@ async function renderBrief() {
     `</div>`;
 }
 
+/* Selskapene: 90-dagersklokke, ærlig inntekt og åpne styresaker fra
+ * sannhetslagets data/companies.json – samme kilde og lastemønster som briefen. */
+let companiesCache = null, companiesFetched = false;
+async function renderCompanies() {
+  const el = $("ccCompanies");
+  if (!el) return;
+  if (!companiesFetched) {
+    companiesFetched = true;
+    const s = window.CF.Sync.status();
+    if (s.configured) {
+      try {
+        const f = await window.CF.Gh.getFile(s.repo, "data/companies.json", window.CF.Sync.config().branch || "main");
+        if (f) companiesCache = JSON.parse(f.content);
+      } catch { /* vis tom tilstand */ }
+    }
+    if (!companiesCache) {
+      try {
+        const r = await fetch("data/companies.json", { cache: "no-store" });
+        if (r.ok) companiesCache = await r.json();
+      } catch { /* offline/lokalt uten data */ }
+    }
+  }
+  const doc = companiesCache;
+  if (!doc || !(doc.companies || []).length) {
+    el.innerHTML = `<div class="panel muted">Ingen selskaper i sannhetslaget enda. Selskapsregisteret (data/companies.json i datarepoet) fylles av styret og nattskiftet.</div>`;
+    return;
+  }
+  el.innerHTML = doc.companies.map((c) => {
+    const daysLeft = c.clock && c.clock.deadline ? Math.ceil((new Date(c.clock.deadline) - Date.now()) / 86400000) : null;
+    const rev = c.revenue || {};
+    const openCases = (c.cases || []).filter((k) => k.status === "til_behandling");
+    const clockClass = daysLeft !== null && daysLeft <= 14 ? "sev0" : daysLeft !== null && daysLeft <= 30 ? "sev1" : "sev2";
+    return `<div class="alert ${clockClass}"><div>
+      <div class="p">${esc(c.name)}</div>
+      <div class="t">${daysLeft !== null ? `⏱ ${daysLeft} dager igjen til ekte signal` : "ingen klokke satt"} · MRR ${esc(String(rev.mrrNok ?? "?"))} kr <span class="badge ${rev.label === "FAKTISK" ? "h" : "est"}">${esc(rev.label || "ukjent")}</span></div>
+      <div class="d">${esc((c.clock && c.clock.signalDefinition || "").split(".")[0])}${c.status && c.status.lastDeploy ? ` · deploy ${esc(c.status.lastDeploy.state)} ${esc(c.status.lastDeploy.at || "")}` : ""}${openCases.length ? ` · ${openCases.length} åpen${openCases.length > 1 ? "ne" : ""} styresak${openCases.length > 1 ? "er" : ""}: ${openCases.map((k) => esc(k.title.split(":")[0])).join(", ")}` : ""}</div>
+    </div></div>`;
+  }).join("");
+}
+
 function renderCommand() {
   renderBrief();
+  renderCompanies();
   renderOwnerQueue();
   renderLive();
   /* Trakten: nuller vises ærlig – det er hele poenget */

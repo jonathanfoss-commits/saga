@@ -57,6 +57,19 @@ function betsFromFactoryData(sync) {
     });
 }
 
+/* Porteføljeselskaper (data/companies.json) er også veddemål under grunnloven:
+ * klokken deres ER 90-dagersvinduet. spentNok kobles til P&L når den finnes. */
+function betsFromCompanies(doc) {
+  if (!doc || !Array.isArray(doc.companies)) return [];
+  return doc.companies.map((c) => ({
+    name: c.name,
+    active: !c.killedAt,
+    startedAt: (c.clock && c.clock.startedAt) || c.registeredAt,
+    spentNok: (c.pnl && c.pnl.totalCostNok) || 0,
+    signal: !!(c.revenue && ((c.revenue.mrrNok || 0) > 0 || (c.revenue.customers || 0) > 0)),
+  }));
+}
+
 const val = (t) => (t && typeof t.value === "number" ? t.value : null);
 
 /* Porteføljesjekk mot tersklene. Returnerer brudd (harde) og notater (ærlige hull). */
@@ -92,4 +105,4 @@ function evaluatePortfolio(bets, c, now = new Date()) {
   return { violations, notes };
 }
 
-module.exports = { load, requiresOwner, betsFromFactoryData, evaluatePortfolio, constitutionPath };
+module.exports = { load, requiresOwner, betsFromFactoryData, betsFromCompanies, evaluatePortfolio, constitutionPath };

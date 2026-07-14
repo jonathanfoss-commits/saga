@@ -27,13 +27,16 @@ async function run() {
   let brief;
   try {
     guard();
+    /* Selskapsstatus FØR styremøtet: styret skal se ferske, kildemerkede tall */
+    await require("./etterpaa-status").run();
     const board = await require("./board-meeting").run();
     const radar = await require("./radar").run();
 
     /* Grunnlovsjekk: alltid i briefen, alltid ærlig om hvilken grunnlov som gjaldt.
      * Status arkiveres maskinlesbart (policy-status.json) så skallet kan vise den. */
     const { c, mode: cMode } = policy.load();
-    const check = policy.evaluatePortfolio(policy.betsFromFactoryData(syncData()), c);
+    const bets = policy.betsFromFactoryData(syncData()).concat(policy.betsFromCompanies(readJSON(dataPath("companies.json"), null)));
+    const check = policy.evaluatePortfolio(bets, c);
     const policyStatus = { schema: 1, date: today(), generatedAt: new Date().toISOString(), constitution: cMode, violations: check.violations, notes: check.notes };
     writeJSON(dataPath("policy-status.json"), policyStatus);
     const policyLines = check.violations.length
@@ -45,7 +48,9 @@ async function run() {
     brief = {
       schema: 1, date: today(), generatedAt: new Date().toISOString(),
       mode: MOCK ? "mock" : "live",
-      headline: board.projects ? `Styret vurderte ${board.projects} selskap${board.projects === 1 ? "" : "er"}, radaren fant nytt` : "Natten var stille – styret mangler synkede data",
+      headline: (board.projects || board.companies)
+        ? `Styret vurderte ${(board.projects || 0) + (board.companies || 0)} veddemål (${board.companies || 0} selskap), radaren fant nytt`
+        : "Natten var stille – styret mangler synkede data",
       sections: [
         { title: "Styremøtet", lines: (board.protocol || board.note || "").split("\n").filter(Boolean).slice(0, 8) },
         { title: "Radar", lines: (radar.findings || "").split("\n").filter(Boolean).slice(0, 6) },

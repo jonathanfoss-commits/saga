@@ -48,3 +48,10 @@ Modulene logger feil/friksjon automatisk til `saga_improvements` i appen
 - Nattskiftets radar skriver til data/; i dag må eieren kopiere funn manuelt
   inn i innboksen. Knapp i morgenbriefen som kaller SAGA.bridge.addIdeaToFactory.
 - Status: åpen
+
+## [effekt: høy] [innsats: middels] Nattskiftet lager PR-utkast mot etterpaa-repoet
+- Krever at etterpaa får privat GitHub-remote (D22) + token-secret. Da kan
+  nattskiftet foreslå neste pipeline-fase som PR (aldri merge – eier-gate).
+  Utkast til utadrettet innhold (byrå-e-post, LinkedIn-poster fra LAUNCH.md)
+  legges som filer i sannhetslaget, aldri sendt.
+- Status: åpen (blokkert av eier-handling: remote + token)
