@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "date": "2026-07-14",
+  "generatedAt": "2026-07-14T19:42:06.538Z",
+  "mode": "mock",
+  "findings": "[MULIGHET] Kommunale energitilskudd endres til høsten – relevant for boligvedlikeholds-abonnementet (middels sikkerhet).\n[RISIKO] To nye aktører i samme nisje siste kvartal – differensiering må spisses (lav sikkerhet).\n[ENDRING] Formspree har endret gratiskvoten – sjekk skjema-endepunktene på publiserte tester (høy sikkerhet)."
+}

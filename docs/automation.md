@@ -53,3 +53,20 @@ Execute Command-node med kommandoen over gjør samme jobb.
 - Manuelle innslag i `improvements.md` (formatet står øverst i filen)
 - Automatisk: factory logger API-feil per modul til `saga_improvements`
   (dedupet); flere moduler kan koble seg på via `SAGA.improve.log()`
+
+## Nattskiftet (GitHub Actions – repo-agentene)
+
+`.github/workflows/night-shift.yml` kjører hver natt (04:00 UTC) og på knapp:
+styremøte i nattmodus → radar → morgenbrief. Output committes som JSON under
+`data/` (git-historikk = revisjonsspor) og publiseres som GitHub Issue med
+etiketten `morgenbrief` (= gratis mobilvarsel via GitHub-appen).
+
+Sikkerhetskontrakt (`agents/lib/common.js`, skal ikke svekkes):
+- Nøkkel kun fra repo-secreten `ANTHROPIC_API_KEY` (eier-handling å legge inn)
+- Harde tak i `config/budget.json`; kill-switch = opprett `config/KILL_SWITCH`
+- Agentene skriver kun under `data/` – aldri kode. Kode-endringer går
+  fortsatt utelukkende via `saga improve` → branchen `saga/auto-improve` → PR
+- Uten secret/over tak skrives en ærlig brief om hvorfor natten var stille
+
+Test lokalt: `MOCK_LLM=1 node agents/night-shift.js` (ingen nettverk).
+Økonomi og takbegrunnelse: `docs/economics.md`.

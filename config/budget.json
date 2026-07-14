@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "comment": "CFO-kontrakt for nattskiftet. Taket er HARDT: agentene nekter å starte over taket. Begrunnelse for 200 kr/mnd: se docs/economics.md. Kill-switch: opprett filen config/KILL_SWITCH (innholdet er likegyldig) så står alle agenter.",
+  "monthlyCapNok": 200,
+  "perRunCapTokens": 60000,
+  "model": "claude-sonnet-5",
+  "usdToNok": 11,
+  "pricesUsdPerMTok": { "claude-sonnet-5": [3, 15], "claude-opus-4-8": [5, 25] }
+}

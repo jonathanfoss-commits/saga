@@ -64,8 +64,10 @@ function aeisHandler(route) {
     const tabs = await page.evaluate(() => [...document.querySelectorAll("#mainnav button")].map((b) => b.dataset.tab));
     check("nav har alle 8 flater", ["command", "idea", "portfolio", "board", "chat", "approvals", "library", "system"].every((t) => tabs.includes(t)), tabs);
 
-    check("morgenbrief-panelet viser ærlig tom-tilstand uten nattskift-data",
-      await page.evaluate(() => document.getElementById("ccBrief").textContent.includes("Nattskiftet har ikke levert")), null);
+    await page.waitForFunction(() => /Nattskiftet har ikke levert|TEST|Natten var stille/.test(document.getElementById("ccBrief").textContent), null, { timeout: 5000 });
+    const briefTxt = await page.evaluate(() => document.getElementById("ccBrief").textContent);
+    check("morgenbrief-panelet er ærlig: demo-brief merkes TEST (eller tom-tilstand uten data)",
+      briefTxt.includes("Nattskiftet har ikke levert") || briefTxt.includes("TEST"), briefTxt.slice(0, 120));
 
     /* Dyp lenke til styret */
     await page.goto(BASE + "#/board", { waitUntil: "networkidle" });

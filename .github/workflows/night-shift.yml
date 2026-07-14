@@ -1,0 +1,52 @@
+name: SAGA night shift
+
+on:
+  schedule:
+    - cron: "0 4 * * *"   # hver natt 04:00 UTC (05/06 norsk tid)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: night-shift
+  cancel-in-progress: false
+
+jobs:
+  night:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Agentene skriver KUN under data/. Uten secret skrives en ærlig
+      # «ikke konfigurert»-brief (ingen AI-kall). Kill-switch/budsjettak
+      # håndheves i agents/lib/common.js.
+      - name: Kjør nattskiftet
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: node agents/night-shift.js
+
+      - name: Commit nattens data
+        run: |
+          git config user.name "saga-night-shift"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/
+          git diff --cached --quiet && echo "ingen endringer" && exit 0
+          git commit -m "data(natt): morgenbrief $(date -u +%F)"
+          git push
+
+      - name: Morgenbrief som Issue (mobil-push via GitHub-appen)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TITLE="Morgenbrief $(date -u +%F)"
+          BODY="$(node -e 'const b=require("./data/brief-latest.json");console.log("**"+b.headline+"** ("+b.mode+")\n\n"+b.sections.map(s=>"### "+s.title+"\n"+s.lines.join("\n")).join("\n\n")+"\n\n_Kost natt: ~"+b.costs.estimateNok+" kr · måned: "+b.costs.monthNok+"/"+b.costs.capNok+" kr (estimat)_")')
+          EXISTING=$(gh issue list --label morgenbrief --state open --json number --jq '.[0].number' || echo "")
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "$BODY"
+            gh issue edit "$EXISTING" --title "$TITLE"
+          else
+            gh label create morgenbrief --color 0ABAB5 --description "Nattskiftets leveranser" 2>/dev/null || true
+            gh issue create --title "$TITLE" --label morgenbrief --body "$BODY"
+          fi
