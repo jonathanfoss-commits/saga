@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
+	<string>Jarvis legger inn avtaler i kalenderen din når du ber om det.</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>Jarvis oppretter påminnelser når du ber om det.</string>
+</dict>
+</plist>

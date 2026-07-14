@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "playwright": "^1.61.1"
+  },
+  "name": "saga",
+  "private": true,
+  "bin": {
+    "saga": "./tools/saga-cli.js"
+  },
+  "scripts": {
+    "saga": "node tools/saga-cli.js",
+    "test": "node tests/separation.test.js && node tests/factory.e2e.js && node tests/aeis.e2e.js && node tests/e2e.js && node tests/saga.e2e.js"
+  }
+}

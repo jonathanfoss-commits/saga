@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SAGA</title>
+<meta name="description" content="Company Factory Control Center – grensesnittet som styrer det AI-drevne startup-studioet.">
+<link rel="stylesheet" href="shared/design-tokens.css">
+<link rel="icon" type="image/svg+xml" href="shared/logo.svg">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#050F0E">
+<link rel="stylesheet" href="os/ui.css">
+</head>
+<body>
+
+<div id="app">
+
+<aside id="sidebar">
+  <div class="logo">
+    <h1>SAGA</h1>
+    <div class="sub">CONTROL CENTER</div>
+  </div>
+  <nav id="mainnav">
+    <button data-tab="command" class="on"><span class="ic">◉</span>COMMAND<span class="n" id="navAlertCount" hidden></span></button>
+    <button data-tab="idea"><span class="ic">◇</span>IDÉLAB</button>
+    <button data-tab="portfolio"><span class="ic">▣</span>SELSKAPER</button>
+    <button data-tab="approvals"><span class="ic">✓</span>GODKJENNINGER<span class="n" id="navGateCount" hidden></span></button>
+    <button data-tab="library"><span class="ic">⌘</span>BIBLIOTEK</button>
+    <button data-tab="system"><span class="ic">⚙</span>SYSTEM</button>
+  </nav>
+  <div class="foot">
+    <a href="assistant/">← SAGA</a> · <a href="board/">AEIS</a><br>
+    cf_* · isolert per prosjekt
+  </div>
+</aside>
+
+<div id="topbar">
+  <div id="crumb"><b>Command Center</b></div>
+  <div class="spacer"></div>
+  <button id="cmdkBtn">⌘ Kommandopalett <kbd>Ctrl K</kbd></button>
+</div>
+
+<main id="view">
+
+<!-- ============ COMMAND CENTER ============ -->
+<section class="tab on" id="tab-command">
+  <h2>INNTEKTSTRAKTEN – FABRIKKENS ENESTE ÆRLIGE MÅLESTOKK</h2>
+  <div class="tiles" id="ccFunnel"></div>
+  <div id="ccOwnerQueue"></div>
+  <h2>KREVER DEG NÅ</h2>
+  <div id="ccAlerts"></div>
+  <div id="ccLive"></div>
+  <h2>PORTEFØLJEPULS</h2>
+  <div class="tiles" id="ccTiles"></div>
+  <div class="row" style="align-items:flex-start">
+    <div style="flex:2; min-width:280px">
+      <h2>MRR – FAKTISKE TALL</h2>
+      <div class="panel chart" id="ccMrr"></div>
+    </div>
+    <div style="flex:3; min-width:300px">
+      <h2>SISTE AKTIVITET</h2>
+      <div class="panel feed" id="ccActivity"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ IDÉLAB ============ -->
+<section class="tab" id="tab-idea">
+  <h2>IDÉ-INNBOKS</h2>
+  <div class="note">Fang idéer på sekunder uten å starte pipelinen. AEIS-radarens funn dukker opp som kandidater.</div>
+  <div class="row" style="margin-top:8px">
+    <input type="text" id="inboxText" placeholder="Rå idé – ett tastetrykk unna å bli husket">
+    <button class="small" id="inboxAddBtn" style="flex:0 0 auto">＋ Fang idé</button>
+  </div>
+  <div id="inboxList"></div>
+
+  <h2>REGISTRER EN IDÉ (FASE 0)</h2>
+  <div class="note">Input kan være svært kort. Fabrikken strukturerer idéen, registrerer antakelser, innkaller relevante fagroller, scorer kritisk og anbefaler neste steg. Den forsøker å avkrefte idéen før den anbefaler bygging.</div>
+  <input type="text" id="ideaName" placeholder="Arbeidsnavn (f.eks. «BoligPuls»)" style="margin-top:10px">
+  <textarea id="ideaText" rows="4" placeholder="Idéen – f.eks. «Lag en abonnementstjeneste som hjelper boligeiere med vedlikehold av bolig.»" style="margin-top:8px"></textarea>
+  <button class="primary" id="runIdeaBtn">🏭 Kjør fabrikken</button>
+  <div id="pipeline"></div>
+  <div id="board"></div>
+  <div id="ideaResult"></div>
+
+  <h2>SAMMENLIGN IDÉER</h2>
+  <div class="note">Scorekortene side ved side – for å prioritere mellom evaluerte idéer, ikke for falsk presisjon.</div>
+  <div class="row" style="margin-top:8px">
+    <select id="cmpA"></select>
+    <select id="cmpB"></select>
+    <button class="small" id="cmpBtn" style="flex:0 0 auto">⇄ Sammenlign</button>
+  </div>
+  <div id="cmpOut"></div>
+</section>
+
+<!-- ============ SELSKAPER ============ -->
+<section class="tab" id="tab-portfolio">
+  <h2>PRIORITERING – HVEM FÅR RESSURSENE?</h2>
+  <div class="note">Transparent formel: idéscore + LTV/CAC-bonus − kapitalbehov − overforbruk − stillstand. Prioritering skal kunne etterprøves, ikke føles.</div>
+  <div id="ranking"></div>
+  <h2>PROSJEKTPORTEFØLJE</h2>
+  <div id="portfolio"></div>
+  <div id="detail"></div>
+</section>
+
+<!-- ============ GODKJENNINGER ============ -->
+<section class="tab" id="tab-approvals">
+  <h2>VENTENDE GODKJENNINGER</h2>
+  <div class="note">Alle beslutningsporter på tvers av porteføljen. Hver godkjenning logges som eierbeslutning med tidspunkt.</div>
+  <div id="approvalsList"></div>
+  <h2>EIER-PORTER (AUTO-GODKJENNES ALDRI)</h2>
+  <div class="panel" id="gateList"></div>
+</section>
+
+<!-- ============ BIBLIOTEK ============ -->
+<section class="tab" id="tab-library">
+  <h2>VARIGE LÆRDOMMER (injiseres i alle fremtidige vurderinger)</h2>
+  <div id="lessonsList"></div>
+  <h2>GJENBRUKSBIBLIOTEK</h2>
+  <div class="note">Retro trekker automatisk ut gjenbrukskandidater fra hvert prosjekt. Prosjektspesifikk kode kopieres aldri ukritisk inn i kjernen – kandidater må generaliseres før de gjenbrukes.</div>
+  <div id="libraryList"></div>
+</section>
+
+<!-- ============ SYSTEM ============ -->
+<section class="tab" id="tab-system">
+  <h2>API-NØKKEL</h2>
+  <input type="password" id="apiKey" placeholder="sk-ant-… (deles med SAGA og AEIS)">
+  <button class="primary" id="saveKeyBtn">Lagre nøkkel</button>
+
+  <h2>DIN TUR – ALT SOM VENTER PÅ DEG</h2>
+  <div id="ownerQueueFull"></div>
+
+  <h2>SYNK &amp; PUBLISERING (GitHub)</h2>
+  <div class="note">Privat datarepo gir synk mellom enheter med commit-historikk som revisjonsspor. Pages-repo gjør falske dører live på minutter. PAT-en lagres KUN i denne nettleseren – aldri i eksport eller synkdata.</div>
+  <div class="row" style="margin-top:8px">
+    <input type="password" id="ghPat" placeholder="GitHub fine-grained PAT (kun contents-tilgang)">
+    <input type="text" id="syncRepo" placeholder="Datarepo: owner/factory-data (PRIVAT)">
+    <input type="text" id="pubRepo" placeholder="Pages-repo: owner/repo (offentlig)">
+  </div>
+  <button class="primary" id="ghSaveBtn">Lagre oppsett</button>
+  <div class="row" style="margin-top:8px">
+    <button class="small" id="syncPushBtn">⇡ Synk nå (push)</button>
+    <button class="small" id="syncPullBtn">⇣ Hent fra repo (pull)</button>
+  </div>
+  <div class="note" id="syncStatus"></div>
+
+  <h2>SELVTEST</h2>
+  <div class="note">Dataintegritet: indeks mot nøkler, korrupte prosjekter, foreldreløse nøkler. Reparasjon mister aldri data.</div>
+  <button class="small" id="integrityBtn">🩺 Kjør selvtest</button>
+  <div id="integrityOut"></div>
+
+  <h2>EKSEMPELPROSJEKT</h2>
+  <div class="note">Laster et isolert, tydelig merket testprosjekt («BoligPuls (TEST)») med ferdig gjennomkjørt pipeline – ingen API-kall. Bruk det til å se hele flyten.</div>
+  <button class="primary" id="demoBtn">🧪 Last inn eksempelprosjekt</button>
+
+  <h2>FABRIKKENS EFFEKTIVITET (ESTIMAT)</h2>
+  <div class="note">Hva koster hvert steg i AI-kall – grunnlaget for å vurdere om fabrikken selv er verdt prisen.</div>
+  <div id="efficiencyView"></div>
+
+  <h2>AI-KOSTNADER (ESTIMAT)</h2>
+  <div class="note">Usage fra hvert LLM-kall akkumuleres per prosjekt og modul. Ratene er konfigurerbare estimater – ikke faktura.</div>
+  <div id="costsView"></div>
+
+  <h2>SELVEVALUERING</h2>
+  <button class="primary" id="reviewBtn">🔄 Evaluer fabrikken</button>
+  <div id="reviewOut"></div>
+
+  <h2>BACKUP OG RAPPORT</h2>
+  <div class="row">
+    <button class="small" id="portfolioReportBtn">📄 Porteføljerapport (Markdown)</button>
+    <button class="small" id="exportBtn">Eksporter alt (JSON)</button>
+    <button class="small" id="importBtn">Importer JSON</button>
+  </div>
+  <input type="file" id="importFile" accept="application/json" style="display:none">
+  <div class="note">Arkitektur og kontrakter: <a href="ARCHITECTURE.md" target="_blank">ARCHITECTURE.md</a>. All data ligger i cf_*-navnerommet, isolert per prosjekt. Eksporten inkluderer prosjekter, lærdommer, bibliotek, aktivitet og kostnader.</div>
+
+  <h2>LAGRINGSBRUK</h2>
+  <div class="note">Nettleserens localStorage har ~5 MB kvote. Genererte nettsteder og apper tar plass – eksporter og slett avsluttede prosjekter ved behov.</div>
+  <div id="storageUsage"></div>
+</section>
+
+</main>
+</div>
+
+<!-- Kommandopalett -->
+<div id="cmdk" role="dialog" aria-label="Kommandopalett">
+  <div class="box">
+    <input id="cmdkInput" placeholder="Skriv en kommando eller et prosjektnavn …" autocomplete="off">
+    <div id="cmdkList"></div>
+  </div>
+</div>
+
+<script src="core/saga-core.js"></script>
+<script src="core/factory.js"></script>
+<script src="os/ui.js"></script>
+</body>
+</html>

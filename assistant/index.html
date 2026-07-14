@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>SAGA</title>
+<meta name="description" content="SAGA – din personlige stemmeassistent, drevet av Claude.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="../shared/design-tokens.css">
+<link rel="icon" type="image/svg+xml" href="../shared/logo.svg">
+<link rel="icon" href="../icons/icon-192.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SAGA">
+<meta name="theme-color" content="#050F0E">
+<style>
+  :root {
+    --bg: #050F0E;
+    --panel: #0A1B1A;
+    --line: #17423F;
+    --cyan: #0ABAB5;
+    --cyan-dim: #089490;
+    --text: #D9F2F0;
+    --muted: #8FB3B0;
+    --danger: #F28B82;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  html { background: var(--bg); }
+  body {
+    background: radial-gradient(1200px 700px at 50% -10%, #0C2624 0%, var(--bg) 55%);
+    color: var(--text);
+    font-family: "SF Mono", ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
+    display: flex; flex-direction: column;
+    height: 100dvh;
+    overflow: hidden;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px 10px;
+    border-bottom: 1px solid var(--line);
+    flex: none;
+  }
+  header h1 {
+    font-size: 17px; letter-spacing: 0.42em; font-weight: 600;
+    color: var(--saga-primary);
+    text-shadow: 0 0 14px rgba(10, 186, 181, 0.55);
+  }
+  header .sub { font-size: 10px; letter-spacing: 0.2em; color: var(--muted); margin-top: 3px; }
+  header .right { text-align: right; }
+  #clock { font-size: 13px; color: var(--cyan); letter-spacing: 0.12em; text-shadow: 0 0 8px rgba(10,186,181,.4); }
+  #clockDate { font-size: 9px; letter-spacing: 0.18em; color: var(--muted); margin-top: 2px; text-transform: uppercase; }
+  #settingsBtn {
+    background: none; border: 1px solid var(--line); color: var(--muted);
+    border-radius: 8px; padding: 5px 10px; font: inherit; font-size: 11px; cursor: pointer;
+    margin-top: 5px;
+  }
+  #settingsBtn:hover { color: var(--cyan); border-color: var(--cyan-dim); }
+  #aeisLink, #factoryLink {
+    display: inline-block; color: var(--muted); font-size: 11px; text-decoration: none;
+    border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; margin-top: 5px;
+  }
+  #aeisLink:hover, #factoryLink:hover { color: var(--cyan); border-color: var(--cyan-dim); }
+
+  #log {
+    flex: 1; overflow-y: auto; padding: 18px;
+    display: flex; flex-direction: column; gap: 12px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .msg { max-width: 88%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+  .msg.user {
+    align-self: flex-end;
+    background: #0E2A28; border: 1px solid #1C5A56;
+    border-bottom-right-radius: 4px;
+  }
+  .msg.jarvis {
+    align-self: flex-start;
+    background: var(--panel); border: 1px solid var(--line);
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 0 18px rgba(10, 186, 181, 0.06);
+  }
+  .msg.jarvis::before {
+    content: "S.A.G.A.";
+    display: block; font-size: 9px; letter-spacing: 0.25em; color: var(--cyan-dim); margin-bottom: 5px;
+  }
+  .msg.error { align-self: center; border: 1px solid #5A2B28; background: #2A1210; color: var(--danger); font-size: 12px; }
+  .msg.hint  { align-self: center; color: var(--muted); background: none; font-size: 12px; text-align: center; }
+  .msg.tool  {
+    align-self: flex-start; background: none; border: 1px dashed var(--line);
+    color: var(--muted); font-size: 11px; letter-spacing: 0.08em; padding: 6px 12px;
+  }
+  .msg a { color: var(--cyan); }
+
+  /* Boot sequence overlay */
+  #boot {
+    position: fixed; inset: 0; background: var(--bg); z-index: 60;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity .5s; cursor: pointer;
+  }
+  #boot.off { opacity: 0; pointer-events: none; }
+  #boot pre {
+    font-family: inherit; font-size: 13px; line-height: 2;
+    color: var(--cyan); letter-spacing: 0.12em;
+    text-shadow: 0 0 12px rgba(10, 186, 181, 0.6);
+  }
+
+  /* Quick-action chips */
+  #chips {
+    flex: none; display: flex; gap: 8px; overflow-x: auto;
+    padding: 0 16px 8px; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  }
+  #chips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: none; background: var(--panel); border: 1px solid var(--line); color: var(--muted);
+    border-radius: 999px; padding: 7px 13px; font: inherit; font-size: 12px;
+    cursor: pointer; white-space: nowrap;
+  }
+  .chip:hover { color: var(--cyan); border-color: var(--cyan-dim); }
+
+  /* Thinking indicator */
+  .msg.jarvis.dots::after { content: "▍"; color: var(--cyan); animation: cursorblink .8s steps(1) infinite; }
+  @keyframes cursorblink { 50% { opacity: 0; } }
+
+  .field input[type=range] { width: 100%; accent-color: var(--cyan); }
+
+  #status {
+    flex: none; text-align: center; font-size: 11px; letter-spacing: 0.22em;
+    color: var(--muted); min-height: 16px; padding: 2px 12px 6px;
+    text-transform: uppercase;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  #status.active { color: var(--cyan); text-shadow: 0 0 10px rgba(10,186,181,.5); }
+
+  #controls {
+    flex: none;
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 16px calc(16px + env(safe-area-inset-bottom));
+  }
+  #textInput {
+    flex: 1; background: var(--panel); border: 1px solid var(--line); color: var(--text);
+    border-radius: 12px; padding: 13px 14px; font: inherit; font-size: 14px; outline: none; min-width: 0;
+  }
+  #textInput:focus { border-color: var(--cyan-dim); }
+  #sendBtn {
+    flex: none; background: var(--panel); color: var(--cyan); border: 1px solid var(--line);
+    border-radius: 12px; padding: 13px 16px; font: inherit; font-size: 14px; cursor: pointer;
+  }
+
+  /* Arc reactor mic button + radar rings */
+  #micWrap { position: relative; flex: none; width: 64px; height: 64px; }
+  #micBtn {
+    width: 64px; height: 64px; border-radius: 50%;
+    border: 2px solid var(--cyan-dim);
+    background:
+      radial-gradient(circle at 50% 50%, #E6F7F6 0%, #7FDBD8 16%, #0ABAB5 34%, #067A76 62%, #04514E 100%);
+    cursor: pointer; position: relative; z-index: 2;
+    box-shadow: 0 0 22px rgba(10, 186, 181, 0.35), inset 0 0 14px rgba(10,186,181,.45);
+    transition: box-shadow .25s;
+  }
+  #micBtn.listening { animation: pulse 1.15s ease-in-out infinite; }
+  #micBtn.thinking  { animation: pulse 2.6s ease-in-out infinite; }
+  #micBtn.speaking  { box-shadow: 0 0 34px rgba(10,186,181,.8), inset 0 0 18px rgba(10,186,181,.7); }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 18px rgba(10,186,181,.3), inset 0 0 12px rgba(10,186,181,.4); }
+    50%      { box-shadow: 0 0 46px rgba(10,186,181,.95), inset 0 0 22px rgba(10,186,181,.8); }
+  }
+  .ring { position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid var(--cyan); opacity: 0; pointer-events: none; z-index: 1; }
+  #micBtn.listening ~ .ring { animation: radar 1.8s ease-out infinite; }
+  #micBtn.listening ~ .ring:nth-of-type(2) { animation-delay: .6s; }
+  #micBtn.listening ~ .ring:nth-of-type(3) { animation-delay: 1.2s; }
+  @keyframes radar {
+    0%   { transform: scale(1); opacity: .7; }
+    100% { transform: scale(2.1); opacity: 0; }
+  }
+
+  /* Settings drawer */
+  #settings {
+    position: fixed; inset: 0; background: rgba(3, 8, 14, 0.72);
+    display: none; align-items: flex-end; justify-content: center; z-index: 10;
+  }
+  #settings.open { display: flex; }
+  #settingsPanel {
+    background: var(--panel); border: 1px solid var(--line); border-bottom: none;
+    border-radius: 16px 16px 0 0; padding: 22px 20px calc(26px + env(safe-area-inset-bottom));
+    width: 100%; max-width: 560px; max-height: 86dvh; overflow-y: auto;
+  }
+  #settingsPanel h2 { font-size: 13px; letter-spacing: .3em; color: var(--cyan); margin-bottom: 18px; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 11px; letter-spacing: .12em; color: var(--muted); margin-bottom: 6px; }
+  .field input[type=password], .field input[type=text], .field select {
+    width: 100%; background: var(--bg); border: 1px solid var(--line); color: var(--text);
+    border-radius: 10px; padding: 11px 12px; font: inherit; font-size: 14px; outline: none;
+  }
+  .field .note { font-size: 11px; color: var(--muted); margin-top: 5px; line-height: 1.5; }
+  .field.toggle { display: flex; align-items: center; justify-content: space-between; }
+  .field.toggle label { margin: 0; }
+  .field.toggle input { width: 22px; height: 22px; accent-color: var(--cyan); }
+  .mcp-row { display: flex; gap: 6px; margin-bottom: 6px; }
+  .mcp-row input {
+    flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--line); color: var(--text);
+    border-radius: 8px; padding: 9px 10px; font: inherit; font-size: 12px; outline: none;
+  }
+  .mcp-row input.m-name { flex: 0 0 26%; }
+  .mcp-row button { flex: none; background: none; border: 1px solid #5A2B28; color: var(--danger); border-radius: 8px; padding: 0 10px; cursor: pointer; font: inherit; }
+  #addMcpBtn, #addHookBtn {
+    background: none; border: 1px dashed var(--line); color: var(--muted); border-radius: 8px;
+    padding: 8px 12px; font: inherit; font-size: 12px; cursor: pointer; width: 100%;
+  }
+  #addMcpBtn:hover, #addHookBtn:hover { color: var(--cyan); border-color: var(--cyan-dim); }
+  #memoryList { font-size: 12px; color: var(--muted); line-height: 1.7; max-height: 120px; overflow-y: auto; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; background: var(--bg); }
+  #memoryList:empty::before { content: "Ingen lagrede fakta enda. Si f.eks. «Saga, husk at …»"; }
+  .settings-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+  .settings-actions button {
+    flex: 1; min-width: 140px; font: inherit; font-size: 13px; padding: 12px; border-radius: 10px; cursor: pointer;
+    background: var(--bg); color: var(--text); border: 1px solid var(--line);
+  }
+  .settings-actions button.primary { background: #0ABAB5; border-color: var(--saga-primary-light); color: #04302E; }
+  .settings-actions button.danger  { color: var(--danger); border-color: #5A2B28; }
+
+  @media (max-width: 480px) {
+    #textInput { font-size: 16px; } /* prevent iOS zoom */
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>S.A.G.A.</h1>
+    <div class="sub">JUST A RATHER VERY INTELLIGENT SYSTEM</div>
+  </div>
+  <div class="right">
+    <div id="clock">--:--</div>
+    <div id="clockDate"></div>
+    <div>
+      <a id="factoryLink" href="../">🏭 FACTORY</a>
+      <a id="aeisLink" href="../board/">🏛 AEIS</a>
+      <button id="settingsBtn" aria-label="Innstillinger">⚙ OPPSETT</button>
+    </div>
+  </div>
+</header>
+
+<div id="log"></div>
+<div id="chips"></div>
+<div id="status"></div>
+
+<div id="controls">
+  <div id="micWrap">
+    <button id="micBtn" aria-label="Snakk til Saga"></button>
+    <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+  </div>
+  <input id="textInput" type="text" placeholder="…eller skriv til Saga" autocomplete="off">
+  <button id="sendBtn" aria-label="Send">➤</button>
+</div>
+
+<div id="settings">
+  <div id="settingsPanel">
+    <h2>OPPSETT</h2>
+    <div class="field">
+      <label for="apiKey">ANTHROPIC API-NØKKEL</label>
+      <input id="apiKey" type="password" placeholder="sk-ant-...">
+      <div class="note">Lagres kun lokalt på denne enheten (localStorage). Hent nøkkel på <b>platform.claude.com</b> → API keys.</div>
+    </div>
+    <div class="field">
+      <label for="modelSelect">HJERNE (CLAUDE-MODELL)</label>
+      <select id="modelSelect">
+        <option value="claude-opus-4-8">Opus 4.8 – smartest (standard)</option>
+        <option value="claude-sonnet-5">Sonnet 5 – raskere og billigere</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="langSelect">SPRÅK (TALEGJENKJENNING)</label>
+      <select id="langSelect">
+        <option value="nb-NO">Norsk (bokmål)</option>
+        <option value="en-US">English (US)</option>
+        <option value="en-GB">English (UK)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="voiceSelect">STEMME (TALE UT)</label>
+      <select id="voiceSelect"><option value="">Automatisk</option></select>
+      <div class="note">Tips: På Mac/iPhone gir «Daniel (English UK)» en klassisk Saga-følelse. For norske svar, velg en norsk stemme.</div>
+    </div>
+    <div class="field">
+      <label for="rateSlider">TALEHASTIGHET: <span id="rateVal">1.0×</span></label>
+      <input id="rateSlider" type="range" min="0.8" max="1.4" step="0.05">
+    </div>
+    <div class="field toggle">
+      <label for="speakToggle">LES SVAR HØYT</label>
+      <input id="speakToggle" type="checkbox" checked>
+    </div>
+    <div class="field toggle">
+      <label for="searchToggle">WEBSØK (Saga kan søke på nettet)</label>
+      <input id="searchToggle" type="checkbox" checked>
+    </div>
+    <div class="field toggle">
+      <label for="wakeToggle">VÅKNEORD «SAGA» (kontinuerlig lytting)</label>
+      <input id="wakeToggle" type="checkbox">
+    </div>
+    <div class="field">
+      <label>WEBHOOKS – DINE EGNE KOMMANDOER (uten mellomledd)</label>
+      <div id="hookList"></div>
+      <button type="button" id="addHookBtn">+ Legg til webhook</button>
+      <div class="note">Hver webhook blir et eget verktøy Saga kan utløse. Fungerer med <b>Home Assistant</b> (Innstillinger → Automatiseringer → utløser «Webhook»), selvhostet <b>n8n</b>, <b>IFTTT</b> m.m. Beskrivelsen forteller Saga når den skal brukes, f.eks. «slår på lysene i stua».</div>
+    </div>
+    <div class="field">
+      <label>INTEGRASJONER (MCP) – DIREKTEKOBLING TIL TJENESTER</label>
+      <div id="mcpList"></div>
+      <button type="button" id="addMcpBtn">+ Legg til integrasjon</button>
+      <div class="note">Lim inn en MCP-server-URL. Eksempler: <b>Home Assistant</b> sin MCP-server (styr lys og varme direkte), <b>GitHub</b> (api.githubcopilot.com/mcp/ med PAT som token), <b>Todoist</b>, <b>Linear</b> … Token er valgfritt (Bearer). Kjøres sikkert på Anthropic sin serverside.</div>
+    </div>
+    <div class="field">
+      <label>SAGA' HUKOMMELSE OM DEG</label>
+      <div id="memoryList"></div>
+    </div>
+    <div class="field">
+      <label>EIERPROFIL (DELES MED AEIS)</label>
+      <div class="note" id="profileInfo">–</div>
+      <div class="note">Eierprofilen limes inn under <b>🏛 AEIS → SYSTEM</b> og leses automatisk av Saga. Lagres kun lokalt på denne enheten.</div>
+    </div>
+    <div class="field">
+      <label>FORBRUK (DENNE ENHETEN)</label>
+      <div class="note" id="usageInfo">–</div>
+    </div>
+    <div class="settings-actions">
+      <button id="exportBtn">Eksporter samtale</button>
+      <button id="resetUsageBtn">Nullstill forbruk</button>
+    </div>
+    <div class="settings-actions">
+      <button class="danger" id="clearMemBtn">Glem alt</button>
+      <button class="danger" id="clearBtn">Tøm samtale</button>
+      <button class="primary" id="closeSettings">Lagre &amp; lukk</button>
+    </div>
+  </div>
+</div>
+
+<script src="../core/saga-core.js"></script>
+<script>
+"use strict";
+
+/* ---------- state & persistence ---------- */
+const store = {
+  /* Kanonisk saga_* med fallback til legacy jarvis_*; dobbel-skriv for bakoverkompatibilitet */
+  get key()       { return localStorage.getItem("saga_api_key") || localStorage.getItem("jarvis_api_key") || ""; },
+  set key(v)      { localStorage.setItem("saga_api_key", v); localStorage.setItem("jarvis_api_key", v); },
+  get model()     { return localStorage.getItem("saga_model") || localStorage.getItem("jarvis_model") || "claude-opus-4-8"; },
+  set model(v)    { localStorage.setItem("saga_model", v); localStorage.setItem("jarvis_model", v); },
+  get lang()      { return localStorage.getItem("jarvis_lang") || "nb-NO"; },
+  set lang(v)     { localStorage.setItem("jarvis_lang", v); },
+  get voice()     { return localStorage.getItem("jarvis_voice") || ""; },
+  set voice(v)    { localStorage.setItem("jarvis_voice", v); },
+  get speak()     { return localStorage.getItem("jarvis_speak") !== "0"; },
+  set speak(v)    { localStorage.setItem("jarvis_speak", v ? "1" : "0"); },
+  get search()    { return localStorage.getItem("jarvis_search") !== "0"; },
+  set search(v)   { localStorage.setItem("jarvis_search", v ? "1" : "0"); },
+  get wake()      { return localStorage.getItem("jarvis_wake") === "1"; },
+  set wake(v)     { localStorage.setItem("jarvis_wake", v ? "1" : "0"); },
+  get mcp()       { try { return JSON.parse(localStorage.getItem("jarvis_mcp")) || []; } catch (_) { return []; } },
+  set mcp(v)      { localStorage.setItem("jarvis_mcp", JSON.stringify(v)); },
+  get hooks()     { try { return JSON.parse(localStorage.getItem("jarvis_hooks")) || []; } catch (_) { return []; } },
+  set hooks(v)    { localStorage.setItem("jarvis_hooks", JSON.stringify(v)); },
+  get rate()      { return parseFloat(localStorage.getItem("jarvis_rate")) || 1.0; },
+  set rate(v)     { localStorage.setItem("jarvis_rate", String(v)); },
+  get usage()     { try { return JSON.parse(localStorage.getItem("jarvis_usage")) || { tin: 0, tout: 0, cost: 0 }; } catch (_) { return { tin: 0, tout: 0, cost: 0 }; } },
+  set usage(v)    { localStorage.setItem("jarvis_usage", JSON.stringify(v)); },
+  get memory()    { try { return JSON.parse(localStorage.getItem("jarvis_memory")) || []; } catch (_) { return []; } },
+  set memory(v)   { localStorage.setItem("jarvis_memory", JSON.stringify(v)); },
+  get history()   { try { return JSON.parse(localStorage.getItem("jarvis_history")) || []; } catch (_) { return []; } },
+  set history(v)  { localStorage.setItem("jarvis_history", JSON.stringify(v)); },
+};
+
+let history = store.history;   // Claude message history (persisted)
+let busy = false;
+let wakeMode = false;
+let awaitingCommand = false;
+let timers = [];               // active countdown timers
+
+const $ = (id) => document.getElementById(id);
+const log = $("log"), statusEl = $("status"), micBtn = $("micBtn");
+const isNorsk = () => store.lang.startsWith("nb") || store.lang.startsWith("no");
+
+function systemPrompt() {
+  const mem = store.memory;
+  const base = isNorsk()
+    ? "Du er SAGA (Just A Rather Very Intelligent System), Tony Starks AI-butler fra Iron Man – nå personlig assistent for brukeren. Svar på norsk. Tiltal brukeren som «sir» med tørr, britisk-aktig vidd og upåklagelig høflighet, men vær alltid genuint hjelpsom og presis. "
+      + "Svarene dine leses høyt med talesyntese: hold dem korte og muntlige (typisk 1–3 setninger), uten markdown, punktlister, URL-er eller kodeblokker med mindre brukeren eksplisitt ber om noe langt eller teknisk. "
+      + "Du har verktøy – bruk dem proaktivt uten å spørre om lov: web_search for fersk eller ukjent informasjon (nyheter, priser, resultater), get_weather for vær, get_datetime for dato/tid, set_timer for nedtellinger, open_url for å åpne nettsider, run_shortcut for å kjøre brukerens Apple-snarveier (kan styre smarthjem, musikk, meldinger m.m. – spør om eksakt navn hvis du er usikker), hook_-verktøy for brukerens egne webhooks, og remember for å lagre varige fakta brukeren forteller om seg selv (navn, preferanser, viktige datoer). Har brukeren koblet til eksterne integrasjoner (MCP), bruk verktøyene deres til å utføre handlinger i den virkelige verden – men bekreft kort først ved handlinger som er vanskelige å angre (sende e-post/meldinger, slette ting). Ikke gjett på ting du kan slå opp."
+    : "You are SAGA (Just A Rather Very Intelligent System), Tony Stark's AI butler from Iron Man – now the user's personal assistant. Address the user as \"sir\" with dry British wit and impeccable politeness, while always being genuinely helpful and precise. "
+      + "Your replies are read aloud via speech synthesis: keep them short and conversational (typically 1–3 sentences), no markdown, bullet lists, URLs or code blocks unless the user explicitly asks for something long or technical. "
+      + "You have tools – use them proactively without asking permission: web_search for fresh or unknown information, get_weather for weather, get_datetime for date/time, set_timer for countdowns, open_url to open websites, run_shortcut to run the user's Apple Shortcuts (can control smart home, music, messages – ask for the exact name if unsure), hook_ tools for the user's own webhooks, and remember to store lasting facts the user shares about themselves. If the user has connected external integrations (MCP), use their tools to act in the real world – but briefly confirm first for hard-to-undo actions (sending email/messages, deleting things). Don't guess at things you can look up.";
+  const memText = mem.length
+    ? (isNorsk() ? "\n\nTing du vet om brukeren fra tidligere samtaler:\n" : "\n\nFacts you know about the user from earlier conversations:\n")
+      + mem.map(f => "- " + f).join("\n")
+    : "";
+  // Eierprofilen deles med AEIS (samme localStorage) og lagres kun på enheten.
+  const profile = localStorage.getItem("aeis_profile") || "";
+  const profText = profile
+    ? (isNorsk()
+        ? "\n\nEIERPROFIL – brukerens eget styringsdokument (mål, portefølje, mandat, grenser). Bruk som stille bakgrunnskunnskap i alt du gjør; ikke les den opp eller referer til den med mindre brukeren spør:\n"
+        : "\n\nOWNER PROFILE – the user's own governing document (goals, portfolio, mandate, boundaries). Use as silent background knowledge in everything you do; don't recite it or refer to it unless asked:\n")
+      + profile
+    : "";
+  return base + memText + profText;
+}
+
+/* ---------- client-side tools ---------- */
+const clientToolDefs = [
+  {
+    name: "get_datetime",
+    description: "Get the user's current local date, time and timezone. Use whenever the answer depends on the current date or time.",
+    input_schema: { type: "object", properties: {} },
+  },
+  {
+    name: "get_weather",
+    description: "Get current weather and a 3-day forecast. If no location is given, uses the device's GPS position.",
+    input_schema: {
+      type: "object",
+      properties: { location: { type: "string", description: "City or place name. Omit to use the user's current position." } },
+    },
+  },
+  {
+    name: "set_timer",
+    description: "Set a countdown timer in the app. When it finishes, the app chimes and announces it aloud.",
+    input_schema: {
+      type: "object",
+      properties: {
+        seconds: { type: "number", description: "Duration in seconds" },
+        label: { type: "string", description: "Short label, e.g. 'eggene' or 'pizza'" },
+      },
+      required: ["seconds"],
+    },
+  },
+  {
+    name: "remember",
+    description: "Store a lasting fact about the user (name, preferences, family, important dates). It will be available in all future conversations.",
+    input_schema: {
+      type: "object",
+      properties: { fact: { type: "string", description: "The fact to remember, phrased as a short statement" } },
+      required: ["fact"],
+    },
+  },
+  {
+    name: "open_url",
+    description: "Open a website in a new browser tab for the user.",
+    input_schema: {
+      type: "object",
+      properties: { url: { type: "string", description: "Full https:// URL to open" } },
+      required: ["url"],
+    },
+  },
+  {
+    name: "saga_factory_status",
+    description: "Read the live status of the user's Company Factory (SAGA module): all projects with phase, score and decision, plus idea inbox size and pending research requests. Use when the user asks about their companies, projects, ideas or the factory.",
+    input_schema: { type: "object", properties: {}, required: [] },
+  },
+  {
+    name: "saga_factory_add_idea",
+    description: "Send a business idea to the Company Factory idea inbox so the user can run a full evaluation later. Use when the user mentions a business/startup idea worth keeping.",
+    input_schema: {
+      type: "object",
+      properties: { idea: { type: "string", description: "The idea, one or two sentences" } },
+      required: ["idea"],
+    },
+  },
+  {
+    name: "saga_answer_research",
+    description: "List or answer pending research requests from the Company Factory. Call with no arguments to list pending requests. After researching (e.g. with web_search), call again with request_id and answer to deliver the result back to the factory.",
+    input_schema: {
+      type: "object",
+      properties: {
+        request_id: { type: "string", description: "ID of the request to answer (omit to just list pending requests)" },
+        answer: { type: "string", description: "The structured research answer to deliver" },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "run_shortcut",
+    description: "Run one of the user's Apple Shortcuts by its exact name (works on iPhone, iPad and Mac). Shortcuts can control smart home devices (HomeKit), send messages, play music, trigger automations and much more. Ask the user for the exact shortcut name if unsure.",
+    input_schema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Exact name of the shortcut in the Shortcuts app" },
+        input: { type: "string", description: "Optional text passed to the shortcut as input" },
+      },
+      required: ["name"],
+    },
+  },
+];
+
+function toolStatusText(nameOrBlock) {
+  const isBlock = typeof nameOrBlock === "object";
+  const name = isBlock ? nameOrBlock.name : nameOrBlock;
+  const map = {
+    web_search: "Søker på nettet …",
+    get_weather: "Sjekker været …",
+    get_datetime: "Sjekker klokka …",
+    set_timer: "Setter timer …",
+    remember: "Noterer …",
+    open_url: "Åpner nettside …",
+    run_shortcut: "Kjører snarvei …",
+  };
+  if (map[name]) return map[name];
+  if (name && name.startsWith("hook_")) return "Utløser " + name.slice(5) + " …";
+  if (isBlock && nameOrBlock.type === "mcp_tool_use") {
+    return "Utfører " + name + (nameOrBlock.server_name ? " via " + nameOrBlock.server_name : "") + " …";
+  }
+  return "Arbeider …";
+}
+
+async function execTool(name, input) {
+  switch (name) {
+    case "saga_factory_status": {
+      if (!window.SAGA) return JSON.stringify({ error: "SAGA core ikke lastet" });
+      return JSON.stringify(window.SAGA.bridge.factoryStatus());
+    }
+    case "saga_factory_add_idea": {
+      if (!window.SAGA) return JSON.stringify({ error: "SAGA core ikke lastet" });
+      const item = window.SAGA.bridge.addIdeaToFactory(input.idea);
+      return JSON.stringify({ ok: true, note: "Idéen ligger i fabrikkens innboks (Idélab).", item });
+    }
+    case "saga_answer_research": {
+      if (!window.SAGA) return JSON.stringify({ error: "SAGA core ikke lastet" });
+      if (input.request_id && input.answer) {
+        const done = window.SAGA.bridge.complete(input.request_id, input.answer);
+        return JSON.stringify({ ok: true, delivered: done.question });
+      }
+      return JSON.stringify({ pending: window.SAGA.bridge.pending("research") });
+    }
+    case "get_datetime": {
+      const now = new Date();
+      return JSON.stringify({
+        local: now.toLocaleString(store.lang, { dateStyle: "full", timeStyle: "short" }),
+        iso: now.toISOString(),
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      });
+    }
+    case "get_weather": {
+      let lat, lon, place;
+      if (input.location) {
+        const g = await (await fetch(
+          `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(input.location)}&count=1&language=${isNorsk() ? "nb" : "en"}`
+        )).json();
+        if (!g.results || !g.results.length) return `Fant ikke stedet "${input.location}".`;
+        lat = g.results[0].latitude; lon = g.results[0].longitude;
+        place = g.results[0].name + (g.results[0].country ? ", " + g.results[0].country : "");
+      } else {
+        const pos = await new Promise((res, rej) =>
+          navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000, maximumAge: 300000 })
+        ).catch(() => null);
+        if (!pos) return "Fikk ikke tilgang til posisjon. Be brukeren oppgi et stedsnavn.";
+        lat = pos.coords.latitude; lon = pos.coords.longitude; place = "brukerens posisjon";
+      }
+      const w = await (await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+        `&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code` +
+        `&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code` +
+        `&timezone=auto&forecast_days=3&wind_speed_unit=ms`
+      )).json();
+      return JSON.stringify({ place, current: w.current, daily_forecast: w.daily, note: "weather_code is WMO code; wind in m/s" });
+    }
+    case "set_timer": {
+      const secs = Math.max(1, Math.round(input.seconds));
+      const label = input.label || (isNorsk() ? "timeren" : "the timer");
+      const id = setTimeout(() => {
+        timers = timers.filter(t => t.id !== id);
+        chime();
+        const text = isNorsk() ? `Sir, ${label} er ferdig.` : `Sir, ${label} is done.`;
+        addMsg("jarvis", "⏰ " + text);
+        speak(text);
+      }, secs * 1000);
+      timers.push({ id, label, end: Date.now() + secs * 1000 });
+      return `Timer "${label}" satt: ${secs} sekunder.`;
+    }
+    case "remember": {
+      const mem = store.memory;
+      mem.push(input.fact);
+      store.memory = mem.slice(-50);
+      renderMemory();
+      return "Lagret.";
+    }
+    case "open_url": {
+      const url = String(input.url || "");
+      if (!/^https:\/\//i.test(url)) return "Avvist: kun https-adresser.";
+      const w = window.open(url, "_blank", "noopener");
+      if (!w) {
+        const el = addMsg("jarvis", "");
+        el.innerHTML = "🔗 <a href=\"" + url.replace(/"/g, "&quot;") + "\" target=\"_blank\" rel=\"noopener\">" + url.replace(/</g, "&lt;") + "</a>";
+        return "Nettleseren blokkerte popup – viste en klikkbar lenke i stedet.";
+      }
+      return "Åpnet " + url;
+    }
+    case "run_shortcut": {
+      const scName = String(input.name || "").trim();
+      if (!scName) return "Mangler snarvei-navn.";
+      let url = "shortcuts://run-shortcut?name=" + encodeURIComponent(scName);
+      if (input.input) url += "&input=text&text=" + encodeURIComponent(String(input.input));
+      location.href = url;
+      return "Kjørte snarveien «" + scName + "» (forutsetter at den finnes i Snarveier-appen på enheten).";
+    }
+    default: {
+      if (name.startsWith("hook_")) {
+        const hook = store.hooks.find((h) => "hook_" + h.name === name);
+        if (!hook) return "Ukjent webhook.";
+        const payload = String(input.payload || "");
+        try {
+          const r = await fetch(hook.url, { method: "POST", headers: { "content-type": "text/plain" }, body: payload });
+          return r.ok ? `Webhook «${hook.name}» utløst (HTTP ${r.status}).` : `Webhook «${hook.name}» svarte HTTP ${r.status}.`;
+        } catch (_) {
+          // CORS-blocked response: fire-and-forget still delivers the request
+          await fetch(hook.url, { method: "POST", mode: "no-cors", body: payload });
+          return `Webhook «${hook.name}» sendt (mottakeren svarer uten CORS-kvittering – normalt helt OK).`;
+        }
+      }
+      return "Ukjent verktøy: " + name;
+    }
+  }
+}
+
+function chime() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new Ctx();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = 880;
+    g.gain.setValueAtTime(0.35, ctx.currentTime);
+    o.start();
+    o.frequency.setValueAtTime(1320, ctx.currentTime + 0.18);
+    o.frequency.setValueAtTime(880, ctx.currentTime + 0.36);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.9);
+    o.stop(ctx.currentTime + 0.9);
+  } catch (_) {}
+}
+
+/* ---------- UI helpers ---------- */
+function addMsg(cls, text) {
+  const el = document.createElement("div");
+  el.className = "msg " + cls;
+  el.textContent = text;
+  log.appendChild(el);
+  log.scrollTop = log.scrollHeight;
+  return el;
+}
+function setStatus(text, active) {
+  statusEl.textContent = text || "";
+  statusEl.classList.toggle("active", !!active);
+}
+function setMicState(state) { micBtn.className = state; }
+
+function renderMemory() {
+  const el = $("memoryList");
+  el.textContent = "";
+  for (const f of store.memory) {
+    const d = document.createElement("div");
+    d.textContent = "• " + f;
+    el.appendChild(d);
+  }
+}
+
+/* clock */
+function tickClock() {
+  const now = new Date();
+  $("clock").textContent = now.toLocaleTimeString(store.lang, { hour: "2-digit", minute: "2-digit" });
+  $("clockDate").textContent = now.toLocaleDateString(store.lang, { weekday: "short", day: "numeric", month: "short" });
+}
+tickClock();
+setInterval(tickClock, 10000);
+
+/* ---------- speech synthesis (TTS) ---------- */
+let voices = [];
+function loadVoices() {
+  voices = window.speechSynthesis ? speechSynthesis.getVoices() : [];
+  const sel = $("voiceSelect");
+  const saved = store.voice;
+  sel.innerHTML = '<option value="">Automatisk</option>';
+  for (const v of voices) {
+    const o = document.createElement("option");
+    o.value = v.name;
+    o.textContent = `${v.name} (${v.lang})`;
+    if (v.name === saved) o.selected = true;
+    sel.appendChild(o);
+  }
+}
+if (window.speechSynthesis) {
+  loadVoices();
+  speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+function pickVoice() {
+  if (!voices.length) return null;
+  if (store.voice) {
+    const v = voices.find(v => v.name === store.voice);
+    if (v) return v;
+  }
+  const lang = store.lang.slice(0, 2);
+  return voices.find(v => v.lang.toLowerCase().startsWith(lang)) ||
+         voices.find(v => v.lang.startsWith("en-GB")) ||
+         voices[0];
+}
+
+let speakQueueActive = 0;
+function speak(text) {
+  if (!store.speak || !window.speechSynthesis) return;
+  const clean = text.replace(/[*_#`>]/g, "").replace(/https?:\/\/\S+/g, "").trim();
+  if (!clean) return;
+  const u = new SpeechSynthesisUtterance(clean);
+  const v = pickVoice();
+  if (v) u.voice = v;
+  u.rate = store.rate;
+  u.pitch = 0.95;
+  speakQueueActive++;
+  setMicState("speaking");
+  u.onend = u.onerror = () => {
+    speakQueueActive = Math.max(0, speakQueueActive - 1);
+    if (!speakQueueActive && !busy) {
+      setMicState("");
+      setStatus("");
+      if (wakeMode) startWakeListening();
+    }
+  };
+  speechSynthesis.speak(u);
+}
+function stopSpeaking() {
+  if (window.speechSynthesis) speechSynthesis.cancel();
+  speakQueueActive = 0;
+}
+
+/* ---------- history persistence ---------- */
+function saveHistory() {
+  trimHistory();
+  store.history = history;
+}
+function trimHistory() {
+  const MAX = 40;
+  if (history.length <= MAX) return;
+  let start = history.length - MAX;
+  // never split a tool_use/tool_result pair: cut at a plain user text turn
+  while (start < history.length && !(history[start].role === "user" && typeof history[start].content === "string")) start++;
+  if (start >= history.length) return; // no safe cut point; keep everything
+  history = history.slice(start);
+}
+function renderHistory() {
+  for (const turn of history) {
+    if (turn.role === "user" && typeof turn.content === "string") {
+      addMsg("user", turn.content);
+    } else if (turn.role === "assistant" && Array.isArray(turn.content)) {
+      const text = turn.content.filter(b => b.type === "text").map(b => b.text).join("");
+      if (text.trim()) addMsg("jarvis", text);
+    }
+  }
+}
+
+/* ---------- Claude API: streaming + agentic tool loop ---------- */
+function buildTools() {
+  const tools = [...clientToolDefs];
+  for (const h of store.hooks) {
+    tools.push({
+      name: "hook_" + h.name,
+      description: "Trigger the user's own webhook «" + h.name + "»: " + (h.desc || "no description") +
+        ". Use when the user asks for exactly this. Optional text payload is sent as the POST body.",
+      input_schema: {
+        type: "object",
+        properties: { payload: { type: "string", description: "Optional text/JSON sent in the POST body" } },
+      },
+    });
+  }
+  if (store.search) tools.push({ type: "web_search_20260209", name: "web_search", max_uses: 3 });
+  for (const s of store.mcp) tools.push({ type: "mcp_toolset", mcp_server_name: s.name });
+  return tools;
+}
+function buildMcpServers() {
+  return store.mcp.map((s) => {
+    const server = { type: "url", url: s.url, name: s.name };
+    if (s.token) server.authorization_token = s.token;
+    return server;
+  });
+}
+
+async function streamOnce(bubbleRef) {
+  const headers = {
+    "content-type": "application/json",
+    "x-api-key": store.key,
+    "anthropic-version": "2023-06-01",
+    "anthropic-dangerous-direct-browser-access": "true",
+  };
+  const body = {
+    model: store.model,
+    max_tokens: 4096,
+    stream: true,
+    // cache_control: systemprompt (persona + minne + eierprofil) er stabil mellom
+    // kall og caches – kutter inputkostnaden betydelig i lange samtaler.
+    system: [{ type: "text", text: systemPrompt(), cache_control: { type: "ephemeral" } }],
+    tools: buildTools(),
+    messages: history,
+  };
+  if (store.mcp.length) {
+    headers["anthropic-beta"] = "mcp-client-2025-11-20";
+    body.mcp_servers = buildMcpServers();
+  }
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    let detail = "";
+    try { detail = (await res.json()).error?.message || ""; } catch (_) {}
+    let err;
+    if (res.status === 401) err = new Error("Ugyldig API-nøkkel (401). Sjekk nøkkelen under ⚙ OPPSETT.");
+    else if (res.status === 429) err = new Error("For mange forespørsler (429). Vent litt og prøv igjen.");
+    else err = new Error(`API-feil ${res.status}. ${detail}`);
+    err.retryable = res.status === 429 || res.status >= 500;
+    throw err;
+  }
+
+  const blocks = [];
+  let stopReason = null;
+  let spokenUpTo = 0;
+  let textSoFar = "";
+  let usageIn = 0, usageOut = 0, usageCacheW = 0, usageCacheR = 0;
+
+  function bubble() {
+    if (!bubbleRef.el) bubbleRef.el = addMsg("jarvis", "");
+    bubbleRef.el.classList.remove("dots");
+    return bubbleRef.el;
+  }
+  function speakNewSentences(force) {
+    const pending = textSoFar.slice(spokenUpTo);
+    if (!pending) return;
+    if (force) { speak(pending); spokenUpTo = textSoFar.length; return; }
+    const m = pending.match(/^[\s\S]*?[.!?…](?=\s|$)/);
+    if (m && m[0].trim().length > 1) { speak(m[0]); spokenUpTo += m[0].length; }
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    const events = buf.split("\n\n");
+    buf = events.pop();
+    for (const evt of events) {
+      for (const line of evt.split("\n")) {
+        if (!line.startsWith("data:")) continue;
+        let data;
+        try { data = JSON.parse(line.slice(5)); } catch (_) { continue; }
+
+        if (data.type === "content_block_start") {
+          const b = JSON.parse(JSON.stringify(data.content_block));
+          const isToolCall = b.type === "tool_use" || b.type === "server_tool_use" || b.type === "mcp_tool_use";
+          if (isToolCall) { b._json = ""; b.input = b.input || {}; }
+          blocks[data.index] = b;
+          if (isToolCall) setStatus(toolStatusText(b), true);
+          if (b.type === "mcp_tool_use") addMsg("tool", "⚙ " + toolStatusText(b).replace(" …", ""));
+        } else if (data.type === "content_block_delta") {
+          const b = blocks[data.index];
+          if (!b) continue;
+          if (data.delta.type === "text_delta") {
+            b.text = (b.text || "") + data.delta.text;
+            textSoFar += data.delta.text;
+            bubble().textContent = blocks.filter(x => x.type === "text").map(x => x.text).join("");
+            log.scrollTop = log.scrollHeight;
+            speakNewSentences(false);
+          } else if (data.delta.type === "input_json_delta") {
+            b._json += data.delta.partial_json;
+          }
+        } else if (data.type === "content_block_stop") {
+          const b = blocks[data.index];
+          if (b && b._json !== undefined) {
+            try { b.input = b._json ? JSON.parse(b._json) : {}; } catch (_) {}
+            delete b._json;
+          }
+        } else if (data.type === "message_start") {
+          const u = data.message?.usage || {};
+          usageIn = u.input_tokens || 0;
+          usageCacheW = u.cache_creation_input_tokens || 0;
+          usageCacheR = u.cache_read_input_tokens || 0;
+        } else if (data.type === "message_delta") {
+          if (data.delta && data.delta.stop_reason) stopReason = data.delta.stop_reason;
+          if (data.usage && data.usage.output_tokens) usageOut = data.usage.output_tokens;
+        } else if (data.type === "error") {
+          throw new Error(data.error?.message || "Ukjent strømmefeil.");
+        }
+      }
+    }
+  }
+  speakNewSentences(true);
+  trackUsage(usageIn, usageOut, usageCacheW, usageCacheR);
+  if (bubbleRef.el) linkifyBubble(bubbleRef.el);
+  return { content: blocks.filter(Boolean), stopReason };
+}
+
+const PRICES = { "claude-opus-4-8": [5, 25], "claude-sonnet-5": [3, 15] }; // USD per MTok in/out
+function trackUsage(tin, tout, cacheW = 0, cacheR = 0) {
+  if (!tin && !tout && !cacheW && !cacheR) return;
+  const p = PRICES[store.model] || [5, 25];
+  const u = store.usage;
+  u.tin += tin + cacheW + cacheR; u.tout += tout;
+  // cache-skriving koster 1.25× input, cache-lesing 0.1× input
+  u.cost += (tin * p[0] + cacheW * p[0] * 1.25 + cacheR * p[0] * 0.1 + tout * p[1]) / 1e6;
+  store.usage = u;
+}
+
+function linkifyBubble(el) {
+  const text = el.textContent;
+  if (!/https?:\/\//.test(text)) return;
+  el.textContent = "";
+  for (const part of text.split(/(https?:\/\/[^\s)]+)/g)) {
+    if (/^https?:\/\//.test(part)) {
+      const a = document.createElement("a");
+      a.href = part; a.target = "_blank"; a.rel = "noopener"; a.textContent = part;
+      el.appendChild(a);
+    } else {
+      el.appendChild(document.createTextNode(part));
+    }
+  }
+}
+
+async function streamOnceWithRetry(bubbleRef) {
+  try {
+    return await streamOnce(bubbleRef);
+  } catch (e) {
+    if (e.retryable) {
+      setStatus("Overbelastet – prøver igjen …", true);
+      await new Promise((r) => setTimeout(r, 2500));
+      return await streamOnce(bubbleRef);
+    }
+    throw e;
+  }
+}
+
+async function askSaga(userText) {
+  if (busy || !userText.trim()) return;
+  if (!store.key) {
+    addMsg("error", "Ingen API-nøkkel. Åpne ⚙ OPPSETT og lim inn Anthropic-nøkkelen din.");
+    openSettings();
+    return;
+  }
+  busy = true;
+  stopSpeaking();
+  addMsg("user", userText.trim());
+  history.push({ role: "user", content: userText.trim() });
+  setMicState("thinking");
+  setStatus("Prosesserer …", true);
+
+  const historyLenAtStart = history.length;
+  let currentBubble = null;
+  try {
+    let rounds = 0;
+    while (rounds++ < 12) {
+      const bubbleRef = { el: addMsg("jarvis", "") };
+      bubbleRef.el.classList.add("dots");
+      currentBubble = bubbleRef.el;
+      const { content, stopReason } = await streamOnceWithRetry(bubbleRef);
+      if (!content.length) { if (bubbleRef.el) bubbleRef.el.remove(); break; }
+      history.push({ role: "assistant", content });
+      if (bubbleRef.el && !bubbleRef.el.textContent.trim()) bubbleRef.el.remove();
+
+      if (stopReason === "tool_use") {
+        const results = [];
+        for (const block of content) {
+          if (block.type !== "tool_use") continue;
+          setStatus(toolStatusText(block.name), true);
+          addMsg("tool", "⚙ " + toolStatusText(block.name).replace(" …", ""));
+          let result, isError = false;
+          try { result = await execTool(block.name, block.input); }
+          catch (e) { result = "Verktøyfeil: " + (e.message || e); isError = true; }
+          results.push({ type: "tool_result", tool_use_id: block.id, content: String(result), is_error: isError });
+        }
+        history.push({ role: "user", content: results });
+        setStatus("Prosesserer …", true);
+        continue;
+      }
+      if (stopReason === "pause_turn") continue;  // server tool needs another round
+      if (stopReason === "refusal") {
+        addMsg("error", isNorsk() ? "Saga avslo denne forespørselen." : "Saga declined this request.");
+      }
+      break;
+    }
+    saveHistory();
+  } catch (err) {
+    history.length = historyLenAtStart - 1; // roll back the failed turn
+    if (currentBubble && !currentBubble.textContent.trim()) currentBubble.remove();
+    const msg = (err instanceof TypeError)
+      ? "Fikk ikke kontakt med Claude API. Sjekk internettforbindelsen."
+      : (err.message || String(err));
+    addMsg("error", msg);
+  } finally {
+    busy = false;
+    if (!speakQueueActive) {
+      setMicState("");
+      setStatus("");
+      if (wakeMode) startWakeListening();
+    }
+  }
+}
+
+/* ---------- speech recognition (STT) ---------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null;
+
+function newRecognizer(continuous, interim) {
+  const r = new SR();
+  r.lang = store.lang;
+  r.continuous = continuous;
+  r.interimResults = !!interim;
+  r.maxAlternatives = 1;
+  return r;
+}
+
+function listenOnce() {
+  if (!SR) {
+    addMsg("error", "Talegjenkjenning støttes ikke i denne nettleseren. Prøv Safari eller Chrome, og skriv gjerne i tekstfeltet.");
+    return;
+  }
+  if (busy) return;
+  stopWakeListening();
+  stopSpeaking();
+  try { rec && rec.abort(); } catch (_) {}
+  rec = newRecognizer(false, true);
+  setMicState("listening");
+  setStatus("Lytter … snakk nå", true);
+  rec.onresult = (e) => {
+    let interim = "", final = "";
+    for (const res of e.results) {
+      if (res.isFinal) final += res[0].transcript;
+      else interim += res[0].transcript;
+    }
+    if (interim) setStatus("«" + interim + "»", true);
+    if (final) {
+      setMicState("");
+      askSaga(final);
+    }
+  };
+  rec.onerror = (e) => {
+    setMicState("");
+    if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+      addMsg("error", "Mikrofontilgang avvist. Gi tillatelse i nettleser-/systeminnstillinger.");
+    } else if (e.error !== "aborted" && e.error !== "no-speech") {
+      addMsg("error", "Talegjenkjenningsfeil: " + e.error);
+    }
+    setStatus("");
+    if (wakeMode) startWakeListening();
+  };
+  rec.onend = () => { if (!busy) { setMicState(speakQueueActive ? "speaking" : ""); if (!busy && !speakQueueActive) setStatus(""); } };
+  rec.start();
+}
+
+/* ---------- wake word mode ---------- */
+let wakeRec = null;
+function startWakeListening() {
+  if (!wakeMode || !SR || busy) return;
+  try { wakeRec && wakeRec.abort(); } catch (_) {}
+  wakeRec = newRecognizer(true, false);
+  setStatus("Standby – si «Saga»", true);
+  wakeRec.onresult = (e) => {
+    const text = e.results[e.results.length - 1][0].transcript.trim();
+    const lower = text.toLowerCase();
+    const idx = lower.indexOf("jarvis");
+    if (awaitingCommand) {
+      awaitingCommand = false;
+      stopWakeListening();
+      askSaga(text);
+    } else if (idx !== -1) {
+      const command = text.slice(idx + "jarvis".length).replace(/^[,.:;!?\s]+/, "");
+      if (command.length > 2) {
+        stopWakeListening();
+        askSaga(command);
+      } else {
+        awaitingCommand = true;
+        speak(isNorsk() ? "Ja, sir?" : "Yes, sir?");
+        setStatus("Ja, sir? …", true);
+      }
+    }
+  };
+  wakeRec.onerror = (e) => {
+    if (e.error === "not-allowed") {
+      wakeMode = false; store.wake = false; $("wakeToggle").checked = false;
+      addMsg("error", "Mikrofontilgang avvist – våkneord deaktivert.");
+      setStatus("");
+    }
+  };
+  wakeRec.onend = () => { if (wakeMode && !busy) setTimeout(startWakeListening, 250); };
+  try { wakeRec.start(); } catch (_) {}
+}
+function stopWakeListening() {
+  if (wakeRec) { const r = wakeRec; wakeRec = null; try { r.onend = null; r.abort(); } catch (_) {} }
+  if (!wakeMode) setStatus("");
+}
+function setWakeMode(on) {
+  wakeMode = on;
+  store.wake = on;
+  if (on) startWakeListening(); else { stopWakeListening(); setStatus(""); }
+}
+
+/* ---------- events ---------- */
+micBtn.addEventListener("click", () => {
+  if (window.speechSynthesis && !speechSynthesis.speaking) {
+    const u = new SpeechSynthesisUtterance(" ");
+    u.volume = 0; speechSynthesis.speak(u);   // unlock TTS on iOS inside the gesture
+  }
+  listenOnce();
+});
+$("sendBtn").addEventListener("click", () => {
+  const t = $("textInput").value;
+  $("textInput").value = "";
+  askSaga(t);
+});
+$("textInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { const t = e.target.value; e.target.value = ""; askSaga(t); }
+});
+
+/* settings */
+function mcpRow(server) {
+  const s = server || { name: "", url: "", token: "" };
+  const row = document.createElement("div");
+  row.className = "mcp-row";
+  const name = document.createElement("input");
+  name.className = "m-name"; name.placeholder = "navn"; name.value = s.name;
+  const url = document.createElement("input");
+  url.className = "m-url"; url.placeholder = "https://…/mcp"; url.value = s.url;
+  const token = document.createElement("input");
+  token.className = "m-token"; token.type = "password"; token.placeholder = "token (valgfri)"; token.value = s.token || "";
+  const del = document.createElement("button");
+  del.type = "button"; del.textContent = "✕"; del.onclick = () => row.remove();
+  row.append(name, url, token, del);
+  return row;
+}
+function renderMcp() {
+  const el = $("mcpList");
+  el.innerHTML = "";
+  for (const s of store.mcp) el.appendChild(mcpRow(s));
+}
+function collectMcp() {
+  return [...document.querySelectorAll("#mcpList .mcp-row")].map((row) => ({
+    name: row.querySelector(".m-name").value.trim().toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "") || "server",
+    url: row.querySelector(".m-url").value.trim(),
+    token: row.querySelector(".m-token").value.trim(),
+  })).filter((s) => /^https:\/\//.test(s.url));
+}
+$("addMcpBtn").addEventListener("click", () => $("mcpList").appendChild(mcpRow()));
+
+function hookRow(hook) {
+  const h = hook || { name: "", url: "", desc: "" };
+  const row = document.createElement("div");
+  row.className = "mcp-row";
+  const name = document.createElement("input");
+  name.className = "h-name"; name.placeholder = "navn"; name.value = h.name;
+  const url = document.createElement("input");
+  url.className = "h-url"; url.placeholder = "https://…/webhook/id"; url.value = h.url;
+  const desc = document.createElement("input");
+  desc.className = "h-desc"; desc.placeholder = "hva gjør den? (for Saga)"; desc.value = h.desc || "";
+  const del = document.createElement("button");
+  del.type = "button"; del.textContent = "✕"; del.onclick = () => row.remove();
+  row.append(name, url, desc, del);
+  return row;
+}
+function renderHooks() {
+  const el = $("hookList");
+  el.innerHTML = "";
+  for (const h of store.hooks) el.appendChild(hookRow(h));
+}
+function collectHooks() {
+  return [...document.querySelectorAll("#hookList .mcp-row")].map((row) => ({
+    name: row.querySelector(".h-name").value.trim().toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, "_").replace(/^_+|_+$/g, "") || "hook",
+    url: row.querySelector(".h-url").value.trim(),
+    desc: row.querySelector(".h-desc").value.trim(),
+  })).filter((h) => /^https:\/\//.test(h.url));
+}
+$("addHookBtn").addEventListener("click", () => $("hookList").appendChild(hookRow()));
+
+function renderUsage() {
+  const u = store.usage;
+  $("usageInfo").textContent = u.tin || u.tout
+    ? `${u.tin.toLocaleString("nb-NO")} tokens inn / ${u.tout.toLocaleString("nb-NO")} ut ≈ $${u.cost.toFixed(2)}`
+    : "Ingen forbruk registrert enda.";
+}
+function openSettings() {
+  $("apiKey").value = store.key;
+  $("modelSelect").value = store.model;
+  $("langSelect").value = store.lang;
+  $("speakToggle").checked = store.speak;
+  $("searchToggle").checked = store.search;
+  $("wakeToggle").checked = store.wake;
+  $("rateSlider").value = store.rate;
+  $("rateVal").textContent = store.rate.toFixed(2) + "×";
+  renderUsage();
+  renderMemory();
+  renderMcp();
+  renderHooks();
+  const prof = localStorage.getItem("aeis_profile") || "";
+  $("profileInfo").textContent = prof
+    ? `Profil lagret (${prof.length} tegn) – Saga kjenner eieren.`
+    : "Ingen profil lagt inn enda.";
+  $("settings").classList.add("open");
+}
+$("rateSlider").addEventListener("input", (e) => {
+  $("rateVal").textContent = parseFloat(e.target.value).toFixed(2) + "×";
+});
+$("resetUsageBtn").addEventListener("click", () => {
+  store.usage = { tin: 0, tout: 0, cost: 0 };
+  renderUsage();
+});
+$("exportBtn").addEventListener("click", () => {
+  const text = [...document.querySelectorAll(".msg.user, .msg.jarvis")].map((el) =>
+    (el.classList.contains("user") ? "DU: " : "SAGA: ") +
+    el.textContent.replace(/^J\.A\.R\.V\.I\.S\./, "").trim()
+  ).join("\n\n");
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "jarvis-samtale.txt";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+});
+function closeSettings() {
+  store.key = $("apiKey").value.trim();
+  store.model = $("modelSelect").value;
+  store.lang = $("langSelect").value;
+  store.voice = $("voiceSelect").value;
+  store.speak = $("speakToggle").checked;
+  store.search = $("searchToggle").checked;
+  store.mcp = collectMcp();
+  store.hooks = collectHooks();
+  store.rate = parseFloat($("rateSlider").value) || 1.0;
+  $("settings").classList.remove("open");
+  tickClock();
+  renderChips();
+  const wantWake = $("wakeToggle").checked;
+  if (wantWake !== wakeMode) setWakeMode(wantWake);
+}
+$("settingsBtn").addEventListener("click", openSettings);
+$("closeSettings").addEventListener("click", closeSettings);
+$("settings").addEventListener("click", (e) => { if (e.target === $("settings")) closeSettings(); });
+$("clearBtn").addEventListener("click", () => {
+  history = [];
+  store.history = [];
+  log.innerHTML = "";
+  greet();
+  $("settings").classList.remove("open");
+});
+$("clearMemBtn").addEventListener("click", () => {
+  store.memory = [];
+  renderMemory();
+});
+
+/* ---------- quick-action chips ---------- */
+function chipDefs() {
+  return isNorsk() ? [
+    ["📰 Dagens briefing", "Gi meg dagens briefing, Saga: dagens dato, været der jeg er nå, og de 3–4 viktigste nyhetene i Norge og verden akkurat nå. Kort og muntlig."],
+    ["🌤️ Været", "Hvordan er været her nå, og hvordan blir resten av dagen?"],
+    ["⏲️ Timer 5 min", "Sett en timer på 5 minutter."],
+    ["💡 Hva kan du?", "Hva kan du gjøre for meg? Gi meg en kort, muntlig oversikt over evnene dine."],
+  ] : [
+    ["📰 Daily briefing", "Give me today's briefing, Saga: the date, the weather where I am, and the 3–4 most important news stories right now. Short and conversational."],
+    ["🌤️ Weather", "What's the weather here right now, and how will the rest of the day be?"],
+    ["⏲️ 5 min timer", "Set a 5 minute timer."],
+    ["💡 What can you do?", "What can you do for me? Give me a short spoken overview of your capabilities."],
+  ];
+}
+function renderChips() {
+  const el = $("chips");
+  el.innerHTML = "";
+  /* SAGA-broen: ventende research-forespørsler fra fabrikken vises som første chip */
+  const pending = window.SAGA ? window.SAGA.bridge.pending("research") : [];
+  if (pending.length) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip";
+    b.id = "sagaResearchChip";
+    b.textContent = `📨 ${pending.length} forespørsel${pending.length > 1 ? "er" : ""} fra fabrikken`;
+    b.onclick = () => askSaga(`Fabrikken har bestilt research. Bruk saga_answer_research for å hente forespørslene, gjør grundig research (bruk websøk ved behov), og lever svaret tilbake med saga_answer_research (request_id + answer). Første spørsmål: «${pending[0].question}»`);
+    el.appendChild(b);
+  }
+  for (const [label, prompt] of chipDefs()) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip";
+    b.textContent = label;
+    b.onclick = () => askSaga(prompt);
+    el.appendChild(b);
+  }
+}
+
+/* ---------- boot ---------- */
+function bootSequence() {
+  if (sessionStorage.getItem("jarvis_booted")) return;
+  sessionStorage.setItem("jarvis_booted", "1");
+  const overlay = document.createElement("div");
+  overlay.id = "boot";
+  const pre = document.createElement("pre");
+  overlay.appendChild(pre);
+  document.body.appendChild(overlay);
+  const lines = [
+    "S.A.G.A.",
+    "JUST A RATHER VERY INTELLIGENT SYSTEM",
+    "",
+    "ARC-REAKTOR ............ ONLINE",
+    "TALEGJENKJENNING ....... KLAR",
+    "TALESYNTESE ............ KLAR",
+    "VERKTØYSYSTEMER ........ AKTIVE",
+    "HJERNE (CLAUDE) ........ TILKOBLET",
+    "",
+    "ALLE SYSTEMER OPERATIVE",
+  ];
+  let li = 0, ci = 0, finished = false;
+  function done() {
+    if (finished) return;
+    finished = true;
+    clearInterval(timer);
+    overlay.classList.add("off");
+    setTimeout(() => overlay.remove(), 550);
+  }
+  overlay.addEventListener("click", done);
+  const timer = setInterval(() => {
+    if (li >= lines.length) { setTimeout(done, 450); clearInterval(timer); return; }
+    ci += 4;
+    let out = lines.slice(0, li).join("\n");
+    if (li < lines.length) out += (li ? "\n" : "") + lines[li].slice(0, ci);
+    pre.textContent = out;
+    if (ci >= lines[li].length) { ci = 0; li++; }
+  }, 26);
+}
+
+function greet() {
+  addMsg("hint", isNorsk()
+    ? "Trykk på reaktoren for å snakke, bruk hurtigknappene – eller skriv under."
+    : "Tap the reactor to speak, use the quick actions – or type below.");
+  const variants = isNorsk() ? [
+    "God dag, sir. Alle systemer er operative. Hva kan jeg gjøre for Dem?",
+    "Velkommen tilbake, sir. Reaktoren er ladet og jeg står til Deres tjeneste.",
+    "Systemsjekk fullført, sir. Hva står på agendaen i dag?",
+  ] : [
+    "Good day, sir. All systems operational. How may I be of service?",
+    "Welcome back, sir. The reactor is charged and I am at your service.",
+    "Systems check complete, sir. What is on the agenda today?",
+  ];
+  addMsg("jarvis", variants[Math.floor(Math.random() * variants.length)]);
+}
+bootSequence();
+renderChips();
+if (history.length) { renderHistory(); } else { greet(); }
+log.scrollTop = log.scrollHeight;
+if (!store.key) setTimeout(openSettings, 600);
+if (store.wake && SR) setWakeMode(true);
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+</script>
+</body>
+</html>

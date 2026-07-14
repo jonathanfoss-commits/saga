@@ -1,0 +1,36 @@
+/* SAGA designsystem – Tiffany Blue på MØRK bakgrunn (eiers valg: alltid mørk).
+ * ÉN kilde til sannhet for farger. Ingen komponent hardkoder brandfarger.
+ *
+ * Kontrast (decisions.md D8/D12): på mørk bunn består #0ABAB5 WCAG AA også for
+ * liten tekst (~6,9:1 mot --saga-bg) – tekstbegrensningen fra lys modus gjelder
+ * ikke lenger. --saga-chart (#0AA79F) er diagram-merkefargen, validert mot mørk
+ * flate med dataviz-validatoren (lysbånd + kontrast PASS). Tekst på primærflater
+ * er mørk (#04302E) fordi hvit på #0ABAB5 kun gir ~2,4:1. */
+:root {
+  /* Brand-palett (Tiffany) */
+  --saga-primary:         #0ABAB5;
+  --saga-primary-dark:    #089490;
+  --saga-primary-light:   #7FDBD8;
+  --saga-primary-tint:    #0C2624;  /* subtile flater – mørk fortolkning */
+  --saga-text-on-primary: #04302E;  /* AA på primærflater (mørk tekst) */
+  --saga-text:            #D9F2F0;
+  --saga-bg:              #050F0E;
+  --saga-border:          #17423F;
+
+  /* Avledede tokens */
+  --saga-primary-text:    #0ABAB5;  /* AA på mørk bunn – kan brukes for liten tekst */
+  --saga-muted:           #8FB3B0;
+  --saga-faint:           #5E8380;
+  --saga-surface:         #0A1B1A;
+  --saga-surface-2:       #0E2321;
+  --saga-glow:            10, 186, 181;
+  --saga-chart:           #0AA79F;  /* diagram-merker, validert (dataviz) */
+
+  /* Semantiske statusfarger (reservert – aldri seriefarger) */
+  --saga-ok:              #6FD695;
+  --saga-warn:            #E8C466;
+  --saga-danger:          #F28B82;
+  --saga-ok-border:       rgba(111, 214, 149, .45);
+  --saga-warn-border:     rgba(232, 196, 102, .45);
+  --saga-danger-border:   rgba(242, 139, 130, .45);
+}

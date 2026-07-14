@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AEIS – Executive Intelligence</title>
+<meta name="description" content="AEIS – Adaptive Executive Intelligence System.">
+<link rel="stylesheet" href="../shared/design-tokens.css">
+<link rel="icon" type="image/svg+xml" href="../shared/logo.svg">
+<link rel="icon" href="../icons/icon-192.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#050F0E">
+<style>
+  :root {
+    --bg: #050F0E; --panel: #0A1B1A; --line: #17423F;
+    --cyan: #0ABAB5; --cyan-dim: #089490; --text: #D9F2F0; --muted: #8FB3B0;
+    --danger: #F28B82; --gold: #E8C466; --green: #6FD695;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { background: var(--bg); }
+  body {
+    background: radial-gradient(1400px 800px at 50% -10%, #0C2624 0%, var(--bg) 55%);
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: "SF Mono", ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  header { padding: 18px 22px 12px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+  h1 { font-size: 18px; letter-spacing: .35em; color: var(--saga-primary); text-shadow: 0 0 14px rgba(10,186,181,.55); }
+  header .sub { font-size: 9px; letter-spacing: .2em; color: var(--muted); margin-top: 3px; }
+  header a { color: var(--muted); font-size: 11px; text-decoration: none; border: 1px solid var(--line); padding: 6px 10px; border-radius: 8px; }
+  nav { display: flex; gap: 6px; padding: 12px 18px; overflow-x: auto; border-bottom: 1px solid var(--line); }
+  nav button {
+    background: none; border: 1px solid var(--line); color: var(--muted); font: inherit; font-size: 12px;
+    letter-spacing: .12em; padding: 8px 14px; border-radius: 8px; cursor: pointer; white-space: nowrap;
+  }
+  nav button.on { color: var(--cyan); border-color: var(--cyan-dim); box-shadow: 0 0 12px rgba(10,186,181,.2); }
+  main { padding: 18px; max-width: 1080px; margin: 0 auto; }
+  .tab { display: none; }
+  .tab.on { display: block; }
+  h2 { font-size: 12px; letter-spacing: .25em; color: var(--cyan-dim); margin: 18px 0 10px; }
+  textarea, input[type=text], input[type=password], input[type=number] {
+    width: 100%; background: var(--panel); border: 1px solid var(--line); color: var(--text);
+    border-radius: 10px; padding: 12px; font: inherit; font-size: 14px; outline: none;
+  }
+  textarea:focus, input:focus { border-color: var(--cyan-dim); }
+  button.primary {
+    background: #0ABAB5; border: 1px solid var(--saga-primary-light); color: #04302E; font: inherit; font-size: 13px;
+    letter-spacing: .08em; padding: 12px 20px; border-radius: 10px; cursor: pointer; margin-top: 10px;
+  }
+  button.primary:disabled { opacity: .5; cursor: default; }
+  button.small { background: none; border: 1px solid var(--line); color: var(--muted); font: inherit; font-size: 11px; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+  button.small:hover { color: var(--cyan); border-color: var(--cyan-dim); }
+  #pipeline { font-size: 11px; letter-spacing: .12em; color: var(--muted); margin: 14px 0; min-height: 16px; }
+  #pipeline b { color: var(--cyan); font-weight: 600; }
+  #board { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; font-size: 12px; }
+  .card.working { border-color: var(--cyan-dim); box-shadow: 0 0 16px rgba(10,186,181,.15); animation: cardpulse 1.4s ease-in-out infinite; }
+  @keyframes cardpulse { 50% { box-shadow: 0 0 26px rgba(10,186,181,.35); } }
+  .card h3 { font-size: 11px; letter-spacing: .12em; color: var(--cyan); margin-bottom: 6px; }
+  .card .st { color: var(--muted); font-size: 10px; letter-spacing: .1em; }
+  .card .rec { margin-top: 8px; line-height: 1.5; white-space: pre-wrap; }
+  .badge { display: inline-block; border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: 10px; color: var(--muted); margin-left: 6px; }
+  .badge.h { color: var(--green); border-color: rgba(123,216,143,.4); }
+  .badge.m { color: var(--gold); border-color: rgba(255,209,102,.4); }
+  .badge.l { color: var(--danger); border-color: rgba(255,107,107,.4); }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-top: 12px; font-size: 13px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .panel.danger { border-color: #5A2B28; }
+  .panel h3 { font-size: 11px; letter-spacing: .2em; color: var(--cyan-dim); margin-bottom: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; overflow-wrap: anywhere; }
+  th { color: var(--muted); font-size: 10px; letter-spacing: .15em; }
+  .ledger-item { cursor: pointer; }
+  .ledger-item:hover { background: rgba(10,186,181,.04); }
+  .muted { color: var(--muted); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .row > * { flex: 1; min-width: 160px; }
+  .note { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+  a { color: var(--cyan); }
+  .card, .note { overflow-wrap: anywhere; }
+  @media (max-width: 600px) {
+    /* 16px hindrer iOS-autozoom ved fokus (zoomen ga «smalnet» skjerm) */
+    textarea, input[type=text], input[type=password], input[type=number] { font-size: 16px; }
+    main { padding: 14px 12px; }
+    th, td { padding: 7px 6px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>A.E.I.S.</h1>
+    <div class="sub">ADAPTIVE EXECUTIVE INTELLIGENCE SYSTEM</div>
+  </div>
+  <a href="../assistant/">← SAGA</a>
+</header>
+
+<nav>
+  <button data-tab="boardroom" class="on">STYREROM</button>
+  <button data-tab="ledger">HOVEDBOK</button>
+  <button data-tab="roles">ROLLER</button>
+  <button data-tab="radar">RADAR</button>
+  <button data-tab="system">SYSTEM</button>
+</nav>
+
+<main>
+
+<!-- ============ STYREROM ============ -->
+<section class="tab on" id="tab-boardroom">
+  <div id="banner"></div>
+  <h2>NY SAK TIL STYRET</h2>
+  <input type="text" id="decTitle" placeholder="Beslutning / sak (f.eks. «Bør vi starte selskap X i marked Y?»)">
+  <textarea id="decContext" rows="4" placeholder="Kontekst: alt styret bør vite – tall, antakelser, alternativer, tidsramme …" style="margin-top:8px"></textarea>
+  <button class="primary" id="runBtn">⚖ Innkall styret</button>
+  <div class="note" id="costEstimate"></div>
+  <div id="pipeline"></div>
+  <div id="board"></div>
+  <div id="verdict"></div>
+</section>
+
+<!-- ============ HOVEDBOK ============ -->
+<section class="tab" id="tab-ledger">
+  <h2>HOVEDBOK – BESLUTNINGER, UTFALL OG LÆRDOM</h2>
+  <div class="note">Registrer faktisk utfall på en beslutning for å utløse post-mortem og oppdatere agentenes fortjente autoritet.</div>
+  <div id="ledgerList"></div>
+  <div id="ledgerDetail"></div>
+</section>
+
+<!-- ============ ROLLER ============ -->
+<section class="tab" id="tab-roles">
+  <h2>EXECUTIVE BOARD – DYNAMISK ORGANISASJON</h2>
+  <div class="note">Ingen rolle er permanent. Autoritet (vekt) fortjenes gjennom kalibrering mot faktiske utfall — alle starter på 1,00×.</div>
+  <div id="rolesTable"></div>
+  <h2>OPPRETT NY ROLLE</h2>
+  <div class="row">
+    <input type="text" id="newRoleTitle" placeholder="Tittel (f.eks. Real Estate Director)">
+    <input type="text" id="newRoleMandate" placeholder="Mandat – hva skal rollen vurdere?">
+  </div>
+  <button class="primary" id="addRoleBtn">+ Opprett rolle</button>
+</section>
+
+<!-- ============ RADAR ============ -->
+<section class="tab" id="tab-radar">
+  <h2>RADAR – PROAKTIV SKANNING</h2>
+  <div class="note">Systemet venter ikke på oppgaver: radaren leter etter muligheter, risiko og markedsendringer basert på profilen din og hovedboken, med websøk.</div>
+  <button class="primary" id="radarBtn">📡 Kjør radar-skanning</button>
+  <div class="note" id="radarLastInfo"></div>
+  <div id="radarOut"></div>
+</section>
+
+<!-- ============ SYSTEM ============ -->
+<section class="tab" id="tab-system">
+  <h2>EIERPROFIL (injiseres i alle analyser)</h2>
+  <div class="note">Lim inn hele eierprofil-dokumentet ditt her. Det lagres <b>kun lokalt på denne enheten</b>
+  (aldri på noen server eller i koden) og blir styringsgrunnlaget for alle vurderinger AEIS gjør.
+  SAGA-appen på samme enhet leser også profilen.</div>
+  <textarea id="profile" rows="14" placeholder="Hvem er du, hva eier du, hva er målene dine, risikotoleranse, tidshorisont, kapital tilgjengelig, mandat, grenser …"></textarea>
+  <button class="primary" id="saveProfileBtn">Lagre profil</button>
+  <div class="note" id="profileStatus"></div>
+
+  <h2>API-NØKKEL</h2>
+  <input type="password" id="apiKey" placeholder="sk-ant-… (deles med SAGA-appen)">
+  <button class="primary" id="saveKeyBtn">Lagre nøkkel</button>
+
+  <h2>MODELLBRUK</h2>
+  <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer">
+    <input type="checkbox" id="routingToggle" style="width:auto">
+    Smart routing: bredde-analyser på Sonnet, Devil's Advocate + CEO-syntese på Opus (60–80&nbsp;% billigere per beslutning)
+  </label>
+  <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;margin-top:8px">
+    <input type="checkbox" id="radarAutoToggle" style="width:auto">
+    Auto-radar: kjør radar-skanning automatisk ved åpning hvis det er gått &gt;24 timer (koster API-bruk)
+  </label>
+
+  <h2>SKY-BACKUP (KRYPTERT)</h2>
+  <div class="note">localStorage kan slettes av Safari. Alt (hovedbok, roller, vekter, profil) krypteres
+  <b>på enheten</b> med passordfrasen (AES-256-GCM) og lagres i en <b>privat GitHub-gist</b> — GitHub ser kun chiffer.
+  Lag et fint-innstilt token på github.com/settings/tokens med kun <b>gist</b>-tilgang.</div>
+  <div class="row" style="margin-top:8px">
+    <input type="password" id="ghToken" placeholder="GitHub-token (kun gist-scope)">
+    <input type="password" id="backupPass" placeholder="Passordfrase (husk den – uten den er backupen uleselig)">
+  </div>
+  <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;margin-top:8px">
+    <input type="checkbox" id="backupAutoToggle" style="width:auto">
+    Auto-backup ved hver endring i hovedbok/roller/profil
+  </label>
+  <div class="row">
+    <button class="primary" id="backupNowBtn">☁ Sikkerhetskopier nå</button>
+    <button class="primary" id="restoreBtn">⟳ Gjenopprett fra sky</button>
+  </div>
+  <div class="note" id="backupStatus"></div>
+
+  <div id="debugPanel"></div>
+
+  <h2>SELVFORBEDRING</h2>
+  <div class="note">Systemet evaluerer sin egen arkitektur, sine regler og roller — og foreslår en migreringsplan. Ingen del av systemet er «ferdig».</div>
+  <button class="primary" id="reviewBtn">🔄 Kjør arkitektur-review</button>
+  <div id="reviewOut"></div>
+
+  <h2>BACKUP</h2>
+  <div class="row">
+    <button class="small" id="exportBtn">Eksporter alt (JSON)</button>
+    <button class="small" id="importBtn">Importer JSON</button>
+  </div>
+  <input type="file" id="importFile" accept="application/json" style="display:none">
+  <div class="note">Arkitektur: <a href="ARCHITECTURE.md" target="_blank">ARCHITECTURE.md</a></div>
+</section>
+
+</main>
+
+<script src="../core/saga-core.js"></script>
+<script src="../core/aeis.js"></script>
+<script>
+(() => {
+"use strict";
+const $ = (id) => document.getElementById(id);
+const { Store, Roles, Scoring, Engine, Ledger, Radar, SelfReview, Backup, LLM } = window.AEIS;
+
+/* ---------- faner ---------- */
+document.querySelectorAll("nav button").forEach((b) => {
+  b.onclick = () => {
+    document.querySelectorAll("nav button").forEach((x) => x.classList.remove("on"));
+    document.querySelectorAll(".tab").forEach((x) => x.classList.remove("on"));
+    b.classList.add("on");
+    $("tab-" + b.dataset.tab).classList.add("on");
+    if (b.dataset.tab === "roles") renderRoles();
+    if (b.dataset.tab === "ledger") renderLedger();
+    if (b.dataset.tab === "radar") renderRadarLast();
+  };
+});
+function goTab(name) { document.querySelector(`nav button[data-tab="${name}"]`).click(); }
+
+function esc(s) { const d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
+function certBadge(c) {
+  const cls = c === "høy" ? "h" : c === "middels" ? "m" : "l";
+  return `<span class="badge ${cls}">${esc(c)} sikkerhet</span>`;
+}
+function fmtUsd(usd) { return "$" + (usd < 0.1 ? usd.toFixed(3) : usd.toFixed(2)); }
+
+/* ---------- banner: radar-status + åpne antakelser ---------- */
+function renderBanner() {
+  const parts = [];
+  const hrs = Radar.hoursSince();
+  if (Store.apiKey && hrs > 24) {
+    const since = isFinite(hrs) ? `${Math.floor(hrs / 24)}d ${Math.round(hrs % 24)}t siden sist` : "aldri kjørt";
+    parts.push(`<div class="panel" style="margin-top:0">📡 Radar: ${esc(since)}. <button class="small" id="bannerRadarBtn">Kjør skanning nå</button></div>`);
+  }
+  const open = Ledger.openAssumptions();
+  if (open.length) {
+    parts.push(`<div class="panel" style="margin-top:8px">🧭 <b>${open.length}</b> falsifiserbar${open.length === 1 ? "" : "e"} antakelse${open.length === 1 ? "" : "r"} venter på oppfølging. <button class="small" id="bannerLedgerBtn">Åpne hovedboken</button></div>`);
+  }
+  $("banner").innerHTML = parts.join("");
+  const rb = $("bannerRadarBtn");
+  if (rb) rb.onclick = () => { goTab("radar"); $("radarBtn").click(); };
+  const lb = $("bannerLedgerBtn");
+  if (lb) lb.onclick = () => goTab("ledger");
+}
+function renderEstimate() {
+  if (!Store.apiKey) { $("costEstimate").textContent = ""; return; }
+  const e = Engine.estimateCost();
+  $("costEstimate").textContent = `Estimert kostnad for full beslutning: ~${fmtUsd(e.usd)} (${e.calls} agent-kall, ${e.routing === "smart" ? "smart routing" : "alt på toppmodellen"}). Faktisk kostnad vises i hovedboken.`;
+}
+
+/* ---------- STYREROM ---------- */
+let running = false;
+$("runBtn").onclick = async () => {
+  const title = $("decTitle").value.trim();
+  if (!title || running) return;
+  if (!Store.apiKey) { alert("Legg inn API-nøkkel under SYSTEM-fanen først."); return; }
+  running = true;
+  $("runBtn").disabled = true;
+  $("board").innerHTML = "";
+  $("verdict").innerHTML = "";
+  const cards = {};
+  const pipe = (html) => { $("pipeline").innerHTML = html; };
+  try {
+    const decision = await Engine.runDecision(title, $("decContext").value.trim(), (step, detail) => {
+      if (step === "framing") pipe("<b>1–4/14</b> " + esc(detail));
+      if (step === "participants") {
+        pipe("<b>5–6/14</b> Uavhengige analyser pågår …");
+        for (const t of detail) {
+          const el = document.createElement("div");
+          el.className = "card working";
+          el.innerHTML = `<h3>${esc(t)}</h3><div class="st">ANALYSERER …</div><div class="rec"></div>`;
+          $("board").appendChild(el);
+          cards[t] = el;
+        }
+      }
+      if (step === "role_done") {
+        const role = Roles.byId(detail);
+        const el = role && cards[role.title];
+        if (el) { el.classList.remove("working"); el.querySelector(".st").textContent = "FERDIG"; }
+      }
+      if (step === "devil") pipe("<b>7–8/14</b> " + esc(detail));
+      if (step === "veto") {
+        pipe("<b>VETO</b> Devil's Advocate krever ny analyserunde");
+        Object.values(cards).forEach((el) => { el.classList.add("working"); el.querySelector(".st").textContent = "RUNDE 2 …"; });
+      }
+      if (step === "premortem") pipe("<b>9/14</b> " + esc(detail));
+      if (step === "synthesis") pipe("<b>10–14/14</b> " + esc(detail));
+    });
+    pipe("<b>FERDIG</b> Beslutningen er lagret i hovedboken.");
+    renderDecision(decision, cards);
+  } catch (e) {
+    pipe(`<span style="color:var(--danger)">FEIL: ${esc(e.message)}</span>`);
+  }
+  running = false;
+  $("runBtn").disabled = false;
+};
+
+function renderDecision(d, cards) {
+  for (const a of d.analyses || []) {
+    const el = cards && cards[a.roleTitle];
+    if (el) {
+      el.querySelector(".st").innerHTML = `ANBEFALING ${certBadge(a.certainty)}${typeof a.probability_success === "number" ? ` <span class="badge">p=${Math.round(a.probability_success * 100)}%</span>` : ""}`;
+      el.querySelector(".rec").textContent = a.recommendation + (a.needs_more_info ? "\n⚠ Mangler informasjon: " + a.data_gaps.join("; ") : "");
+    }
+  }
+  const s = d.synthesis;
+  const devil = d.devilRound2 || d.devil;
+  $("verdict").innerHTML = `
+    ${d.rounds > 1 ? `<div class="panel danger"><h3>⚑ DEVIL'S ADVOCATE NEDLA VETO – ANALYSEN BLE KJØRT PÅ NYTT</h3>${esc(d.devil.veto_reason)}</div>` : ""}
+    <div class="panel danger"><h3>DEVIL'S ADVOCATE</h3>Innvendinger:\n- ${devil.objections.map(esc).join("\n- ") || "(ingen)"}\n\nUtestede antakelser: ${devil.untested_assumptions.map(esc).join("; ") || "(ingen)"}</div>
+    <div class="panel"><h3>PRE-MORTEM («om to år var dette en katastrofe»)</h3>${esc(d.premortem.failure_story)}\n\nTiltak nå:\n- ${d.premortem.mitigations.map(esc).join("\n- ")}</div>
+    <div class="panel"><h3>CEO-KONKLUSJON ${certBadge(s.certainty)}${typeof s.probability_success === "number" ? ` <span class="badge">p=${Math.round(s.probability_success * 100)}%</span>` : ""}</h3><b style="color:var(--cyan)">${esc(s.recommendation)}</b>\n\n${esc(s.summary)}\n\nUenigheter i styret:\n- ${s.disagreements.map(esc).join("\n- ") || "(ingen vesentlige)"}\n\nForventet verdi: ${esc(s.expected_value_reasoning)}</div>
+    ${s.outside_view ? `<div class="panel"><h3>UTENFRA-PERSPEKTIV (BASE RATE)</h3>${esc(s.outside_view)}</div>` : ""}
+    <div class="panel"><h3>SCENARIER</h3><table><tr><th>SCENARIO</th><th>SANNSYNLIGHET</th><th>UTFALL</th><th>VERDI</th></tr>${s.scenarios.map((x) => `<tr><td>${esc(x.name)}</td><td>${Math.round(x.probability * 100)}%</td><td>${esc(x.outcome)}</td><td>${esc(x.value_estimate)}</td></tr>`).join("")}</table></div>
+    <div class="panel"><h3>HANDLINGSPLAN</h3>${s.action_plan.map((x, i) => `${i + 1}. ${esc(x)}`).join("\n")}</div>
+    <div class="panel"><h3>ANTAKELSER SOM SKAL FØLGES OPP</h3><table><tr><th>ANTAKELSE</th><th>TEST</th><th>HORISONT</th></tr>${s.assumptions_to_track.map((x) => `<tr><td>${esc(x.claim)}</td><td>${esc(x.test)}</td><td>${esc(x.review_horizon)}</td></tr>`).join("")}<caption class="note" style="caption-side:bottom;text-align:left;padding-top:6px">Antakelsene følges opp med sjekkliste i hovedboken.</caption></table></div>
+    ${d.cost ? `<div class="note">Faktisk kostnad: ${fmtUsd(d.cost.usd)} (${d.cost.calls} kall, ${d.cost.in.toLocaleString("nb-NO")} tokens inn${d.cost.cacheRead ? ` + ${d.cost.cacheRead.toLocaleString("nb-NO")} fra cache` : ""}, ${d.cost.out.toLocaleString("nb-NO")} ut)</div>` : ""}`;
+  renderBanner();
+}
+
+/* ---------- HOVEDBOK ---------- */
+function renderLedger() {
+  const list = Ledger.list();
+  $("ledgerDetail").innerHTML = "";
+  if (!list.length) { $("ledgerList").innerHTML = `<div class="panel muted">Hovedboken er tom. Kjør en sak i styrerommet.</div>`; return; }
+  $("ledgerList").innerHTML = `<table><tr><th>DATO</th><th>SAK</th><th>ANBEFALING</th><th>UTFALL</th></tr>` +
+    list.map((d) => `<tr class="ledger-item" data-id="${d.id}"><td>${esc(d.at.slice(0, 10))}</td><td>${esc(d.title)}</td><td>${esc((d.synthesis?.recommendation || d.radar || "").slice(0, 80))}</td><td>${d.outcome ? d.outcome.successPct + "%" : d.synthesis ? "—" : ""}</td></tr>`).join("") + "</table>";
+  document.querySelectorAll(".ledger-item").forEach((tr) => { tr.onclick = () => showDecision(tr.dataset.id); });
+}
+function showDecision(id) {
+  const d = Ledger.get(id);
+  if (!d) return;
+  if (d.radar) { $("ledgerDetail").innerHTML = `<div class="panel"><h3>${esc(d.title)}</h3>${esc(d.radar)}</div>`; return; }
+  let html = `<div class="panel"><h3>${esc(d.title)}</h3>${esc(d.synthesis?.recommendation || "")} ${d.synthesis ? certBadge(d.synthesis.certainty) : ""}\n\n${esc(d.synthesis?.summary || "")}${d.cost ? `\n\n<span class="muted">Kostnad: ${fmtUsd(d.cost.usd)} (${d.cost.calls} kall)</span>` : ""}</div>`;
+  const assumptions = d.synthesis?.assumptions_to_track || [];
+  if (assumptions.length) {
+    const checks = d.assumptionChecks || {};
+    html += `<div class="panel"><h3>ANTAKELSER – SJEKKLISTE</h3><table><tr><th></th><th>ANTAKELSE</th><th>TEST</th><th>HORISONT</th></tr>${assumptions.map((a, i) =>
+      `<tr${checks[i] ? ' style="opacity:.55"' : ""}><td><input type="checkbox" data-assum="${i}" ${checks[i] ? "checked" : ""} style="width:auto"></td><td>${esc(a.claim)}</td><td>${esc(a.test)}</td><td>${esc(a.review_horizon)}</td></tr>`).join("")}</table>
+      <div class="note">Huk av når antakelsen er testet. Åpne antakelser vises som varsel i styrerommet.</div></div>`;
+  }
+  if (d.outcome) {
+    html += `<div class="panel"><h3>UTFALL: ${d.outcome.successPct}% SUKSESS</h3>${esc(d.outcome.notes || "")}</div>`;
+    if (d.postmortem) html += `<div class="panel"><h3>POST-MORTEM</h3>Fungerte:\n- ${d.postmortem.what_worked.map(esc).join("\n- ")}\n\nFeilet:\n- ${d.postmortem.what_failed.map(esc).join("\n- ")}\n\nLærdom: <b style="color:var(--cyan)">${esc(d.postmortem.lesson)}</b></div>`;
+  } else if (d.synthesis) {
+    html += `<div class="panel"><h3>REGISTRER FAKTISK UTFALL</h3>
+      <div class="row"><input type="number" id="outcomePct" min="0" max="100" placeholder="Suksess 0–100 %"><input type="text" id="outcomeNotes" placeholder="Hva skjedde?"></div>
+      <button class="primary" id="outcomeBtn">Registrer utfall → post-mortem + kalibrering</button>
+      <div class="note" id="outcomeStatus"></div></div>`;
+  }
+  $("ledgerDetail").innerHTML = html;
+  document.querySelectorAll("[data-assum]").forEach((cb) => {
+    cb.onchange = () => { Ledger.toggleAssumption(id, Number(cb.dataset.assum)); showDecision(id); renderBanner(); };
+  });
+  const btn = $("outcomeBtn");
+  if (btn) btn.onclick = async () => {
+    const pct = parseFloat($("outcomePct").value);
+    if (isNaN(pct)) return;
+    btn.disabled = true;
+    $("outcomeStatus").textContent = "Scorer agentene og kjører post-mortem …";
+    try {
+      await Ledger.registerOutcome(id, pct, $("outcomeNotes").value, (s) => { $("outcomeStatus").textContent = s; });
+      showDecision(id);
+      renderLedger();
+      showDecision(id);
+    } catch (e) { $("outcomeStatus").textContent = "Feil: " + e.message; btn.disabled = false; }
+  };
+}
+
+/* ---------- ROLLER ---------- */
+function renderRoles() {
+  const roles = Roles.all().filter((r) => r.active || !r.temporary);
+  const calib = (r) => {
+    const h = r.track.history || [];
+    if (!h.length) return `<span class="muted">–</span>`;
+    const pts = h.slice(-6).map((x) => `${Math.round(x.p * 100)}→${Math.round(x.o * 100)}`).join(", ");
+    const brier = (r.track.brierSum / r.track.n).toFixed(3);
+    return `<span title="predikert%→faktisk%">${esc(pts)}</span> <span class="badge">Brier ${brier}</span>`;
+  };
+  $("rolesTable").innerHTML = `<table><tr><th>ROLLE</th><th>MANDAT</th><th>VEKT</th><th>KALIBRERING (pred→faktisk)</th><th></th></tr>` +
+    roles.map((r) => `<tr${r.active ? "" : ' style="opacity:.45"'}><td>${esc(r.title)}${r.temporary ? ' <span class="badge">midlertidig</span>' : ""}</td><td class="muted">${esc(r.mandate)}</td><td>${Scoring.weightOf(r).toFixed(2)}× <span class="muted">(${r.track.n})</span></td><td>${calib(r)}</td><td>${r.active ? `<button class="small" data-retire="${r.id}">Avvikle</button>` : "avviklet"}</td></tr>`).join("") + "</table>";
+  document.querySelectorAll("[data-retire]").forEach((b) => {
+    b.onclick = () => { Roles.retire(b.dataset.retire); renderRoles(); };
+  });
+}
+$("addRoleBtn").onclick = () => {
+  const t = $("newRoleTitle").value.trim(), m = $("newRoleMandate").value.trim();
+  if (!t || !m) return;
+  Roles.add(t, m);
+  $("newRoleTitle").value = ""; $("newRoleMandate").value = "";
+  renderRoles();
+};
+
+/* ---------- RADAR ---------- */
+function renderRadarResult(text, heading) {
+  const findings = Radar.parseFindings(text);
+  const tagColor = { MULIGHET: "var(--green)", RISIKO: "var(--danger)", ENDRING: "var(--gold)" };
+  let html = `<div class="panel"><h3>${esc(heading || "RADAR-FUNN")}</h3>${esc(text)}</div>`;
+  if (findings.length) {
+    html += `<h2>KONVERTER FUNN TIL STYRESAK</h2>` + findings.map((f, i) =>
+      `<div class="panel" style="margin-top:8px"><b style="color:${tagColor[f.tag] || "var(--cyan)"}">[${f.tag}]</b> ${esc(f.title)} <button class="small" data-finding="${i}" style="margin-left:8px">→ Styresak</button></div>`).join("");
+  }
+  $("radarOut").innerHTML = html;
+  document.querySelectorAll("[data-finding]").forEach((b) => {
+    b.onclick = () => {
+      const f = findings[Number(b.dataset.finding)];
+      $("decTitle").value = `${f.tag === "RISIKO" ? "Håndtere risiko" : f.tag === "ENDRING" ? "Respondere på endring" : "Forfølge mulighet"}: ${f.title}`;
+      $("decContext").value = `Fra radar-skanning ${new Date().toISOString().slice(0, 10)}:\n\n${f.body}`;
+      goTab("boardroom");
+      $("decTitle").scrollIntoView({ behavior: "smooth" });
+    };
+  });
+}
+function renderRadarLast() {
+  const hrs = Radar.hoursSince();
+  $("radarLastInfo").textContent = isFinite(hrs)
+    ? `Sist kjørt for ${hrs < 1 ? Math.round(hrs * 60) + " min" : hrs < 48 ? Math.round(hrs) + " timer" : Math.round(hrs / 24) + " døgn"} siden.`
+    : "Aldri kjørt på denne enheten.";
+  const last = Radar.latest();
+  if (last && !$("radarOut").innerHTML) renderRadarResult(last.radar, "SIDEN SIST – " + last.at.slice(0, 10));
+}
+async function runRadar() {
+  if (!Store.apiKey) { alert("Legg inn API-nøkkel under SYSTEM-fanen først."); return; }
+  $("radarBtn").disabled = true;
+  $("radarOut").innerHTML = `<div class="panel muted">Skanner (websøk kan ta et minutt) …</div>`;
+  try {
+    const text = await Radar.run((s) => { $("radarOut").innerHTML = `<div class="panel muted">${esc(s)}</div>`; });
+    renderRadarResult(text);
+  } catch (e) {
+    $("radarOut").innerHTML = `<div class="panel danger">Feil: ${esc(e.message)}</div>`;
+  }
+  $("radarBtn").disabled = false;
+  renderRadarLast();
+  renderBanner();
+}
+$("radarBtn").onclick = runRadar;
+
+/* ---------- SYSTEM ---------- */
+const profileStatus = () => {
+  const p = Store.profile;
+  $("profileStatus").textContent = p
+    ? `Profil lagret lokalt (${p.length} tegn) – injiseres i alle AEIS-kall og i SAGA.`
+    : "Ingen profil lagret enda. Uten profil vurderer styret i blinde – legg den inn.";
+};
+profileStatus();
+$("profile").value = Store.profile;
+$("apiKey").value = Store.apiKey;
+$("saveProfileBtn").onclick = () => { Store.profile = $("profile").value; profileStatus(); renderEstimate(); $("saveProfileBtn").textContent = "Lagret ✓"; setTimeout(() => $("saveProfileBtn").textContent = "Lagre profil", 1500); };
+$("saveKeyBtn").onclick = () => { Store.apiKey = $("apiKey").value.trim(); renderEstimate(); renderBanner(); $("saveKeyBtn").textContent = "Lagret ✓"; setTimeout(() => $("saveKeyBtn").textContent = "Lagre nøkkel", 1500); };
+
+/* ---------- modellbruk + auto-radar ---------- */
+$("routingToggle").checked = (localStorage.getItem("aeis_routing") || "smart") === "smart";
+$("routingToggle").onchange = () => { localStorage.setItem("aeis_routing", $("routingToggle").checked ? "smart" : "quality"); renderEstimate(); };
+$("radarAutoToggle").checked = localStorage.getItem("aeis_radar_auto") === "1";
+$("radarAutoToggle").onchange = () => localStorage.setItem("aeis_radar_auto", $("radarAutoToggle").checked ? "1" : "0");
+
+/* ---------- sky-backup ---------- */
+function backupStatus(msg) {
+  const auto = Backup.auto && Backup.configured() ? " Auto-backup er PÅ." : "";
+  const last = Backup.last ? `Sist sikkerhetskopiert: ${Backup.last.slice(0, 16).replace("T", " ")}.` : "Aldri sikkerhetskopiert til sky.";
+  $("backupStatus").textContent = msg || (last + auto);
+}
+$("ghToken").value = Backup.token;
+$("backupPass").value = Backup.pass;
+$("backupAutoToggle").checked = Backup.auto;
+$("backupAutoToggle").onchange = () => { Backup.auto = $("backupAutoToggle").checked; backupStatus(); };
+$("backupNowBtn").onclick = async () => {
+  Backup.token = $("ghToken").value.trim();
+  Backup.pass = $("backupPass").value;
+  $("backupNowBtn").disabled = true;
+  backupStatus("Krypterer og laster opp …");
+  try { await Backup.backup(); backupStatus(); }
+  catch (e) { backupStatus("Feil: " + e.message); }
+  $("backupNowBtn").disabled = false;
+};
+$("restoreBtn").onclick = async () => {
+  Backup.token = $("ghToken").value.trim();
+  Backup.pass = $("backupPass").value;
+  if (!confirm("Gjenopprette fra sky? Dette overskriver hovedbok, roller og profil på denne enheten.")) return;
+  $("restoreBtn").disabled = true;
+  backupStatus("Henter og dekrypterer …");
+  try {
+    await Backup.restore();
+    backupStatus("Gjenopprettet ✓");
+    $("profile").value = Store.profile;
+    profileStatus(); renderRoles(); renderLedger(); renderBanner(); renderEstimate();
+  } catch (e) { backupStatus("Feil: " + e.message); }
+  $("restoreBtn").disabled = false;
+};
+backupStatus();
+
+/* ---------- ?debug: rå API-trafikk ---------- */
+if (location.search.includes("debug")) {
+  const dbg = document.createElement("div");
+  dbg.innerHTML = `<h2>DEBUG – SISTE API-KALL</h2><div class="panel" id="debugOut" style="font-size:11px">Kjør en sak, så vises kallene her. Full trafikk ligger i konsollen.</div>`;
+  $("debugPanel").appendChild(dbg);
+  setInterval(() => {
+    if (!LLM.debugLog.length) return;
+    $("debugOut").textContent = LLM.debugLog.map((d) =>
+      `${d.at.slice(11, 19)} ${d.kind} → ${d.model} [${d.stop}] in=${(d.usage.input_tokens || 0) + (d.usage.cache_creation_input_tokens || 0)} cache=${d.usage.cache_read_input_tokens || 0} out=${d.usage.output_tokens || 0}`).join("\n");
+  }, 1500);
+}
+$("reviewBtn").onclick = async () => {
+  $("reviewBtn").disabled = true;
+  $("reviewOut").innerHTML = `<div class="panel muted">Systemet gransker seg selv …</div>`;
+  try {
+    const text = await SelfReview.run();
+    $("reviewOut").innerHTML = `<div class="panel"><h3>SELVEVALUERING OG MIGRERINGSPLAN</h3>${esc(text)}</div>`;
+  } catch (e) {
+    $("reviewOut").innerHTML = `<div class="panel danger">Feil: ${esc(e.message)}</div>`;
+  }
+  $("reviewBtn").disabled = false;
+};
+$("exportBtn").onclick = () => {
+  const blob = new Blob([Store.exportAll()], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "aeis-backup.json";
+  a.click();
+};
+$("importBtn").onclick = () => $("importFile").click();
+$("importFile").onchange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  Store.importAll(await file.text());
+  renderRoles(); renderLedger();
+  alert("Importert.");
+};
+
+renderRoles();
+renderBanner();
+renderEstimate();
+
+/* Auto-radar ved åpning (>24t siden sist), hvis aktivert */
+if (localStorage.getItem("aeis_radar_auto") === "1" && Store.apiKey && Radar.hoursSince() > 24) {
+  goTab("radar");
+  runRadar();
+}
+})();
+</script>
+</body>
+</html>
