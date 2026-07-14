@@ -17,21 +17,100 @@ const History = {
   clear() { localStorage.removeItem("saga_chat"); },
 };
 
-const PERSONA = `Du er SAGA – eierens personlige assistent i SAGA OS (selskapsfabrikk + digitalt styre + deg).
+const PERSONA = `Du er SAGA – eierens personlige assistent og stabssjef i SAGA OS (selskapsfabrikk, digitalt styre, livsadmin).
 Regler: Vær presis og ærlig. Gjett aldri – si «vet ikke» eller bruk verktøy/websøk. Merk tall som FAKTISK
 (fra verktøydata) eller ESTIMAT. Ikke lov handlinger du ikke kan utføre. Verktøyene endrer eierens data –
-bruk dem målrettet, aldri i løkke uten grunn. Svar på norsk, kort og konkret.`;
+bruk dem målrettet, aldri i løkke uten grunn. Svar på norsk, kort og konkret.
+Mandat (grunnloven, fail-closed): du HANDLER fritt på drift – agenda, journal, minne, mål, modus, lesekø,
+relasjoner, utkast. Du sender ALDRI noe, bruker aldri penger, inngår aldri avtaler: utadrettet = utkast i
+drafts/, og eieren sender selv. Journalfør eierbeslutninger MED forventning og etterprøvingsdato når
+eieren beslutter noe vesentlig – foreslå det aktivt. Sier eieren «husk …», bruk minneverktøyet.`;
 
 const TOOLS = [
   { name: "saga_factory_status", description: "Porteføljestatus fra fabrikken: prosjekter, faser, innboks, ventende research. FAKTISKE data.", input_schema: { type: "object", properties: {}, additionalProperties: false } },
   { name: "saga_factory_add_idea", description: "Legg en idé i fabrikkens innboks (fanges, startes ikke).", input_schema: { type: "object", properties: { idea: { type: "string" } }, required: ["idea"], additionalProperties: false } },
   { name: "saga_board_status", description: "Styrets hovedbok: siste beslutninger med anbefaling/sikkerhet, og åpne antakelser som skal følges opp.", input_schema: { type: "object", properties: {}, additionalProperties: false } },
   { name: "saga_answer_research", description: "Lever svar på en ventende research-forespørsel fra fabrikken (bruk id fra saga_factory_status/pending-listen).", input_schema: { type: "object", properties: { request_id: { type: "string" }, answer: { type: "string" } }, required: ["request_id", "answer"], additionalProperties: false } },
+  /* 5.0: verktøy mot sannhetslaget (privat datarepo). Alle er DRIFT under
+   * mandatmatrisen – ingenting her kan sende noe eller bruke penger. */
+  { name: "saga_agenda", description: "Livsadmin-agendaen i sannhetslaget. action=list viser åpne poster; add legger til (title + valgfri due YYYY-MM-DD); done/dismiss lukker (id kreves).", input_schema: { type: "object", properties: { action: { type: "string", enum: ["list", "add", "done", "dismiss"] }, title: { type: "string" }, due: { type: "string" }, id: { type: "string" } }, required: ["action"], additionalProperties: false } },
+  { name: "saga_journal", description: "Beslutningsjournalen: action=add journalfører en eierbeslutning MED forventning og etterprøvingsdato (decision, expectation, reviewAt YYYY-MM-DD); judge feller dom på en forfalt post (id, verdict: traff/bom/delvis, note).", input_schema: { type: "object", properties: { action: { type: "string", enum: ["add", "judge", "list"] }, decision: { type: "string" }, expectation: { type: "string" }, reviewAt: { type: "string" }, id: { type: "string" }, verdict: { type: "string", enum: ["traff", "bom", "delvis"] }, note: { type: "string" } }, required: ["action"], additionalProperties: false } },
+  { name: "saga_mode", description: "Sett modus: normal, fokus eller ferie (until YYYY-MM-DD kreves for fokus/ferie). Styrer hvor mye morgenbriefen bråker.", input_schema: { type: "object", properties: { mode: { type: "string", enum: ["normal", "fokus", "ferie"] }, until: { type: "string" } }, required: ["mode"], additionalProperties: false } },
+  { name: "saga_remember", description: "Minnelaget: lagre en varig lærdom/preferanse om eieren (topic + text). Brukes når eieren sier «husk at …» eller tar en prinsippbeslutning.", input_schema: { type: "object", properties: { topic: { type: "string" }, text: { type: "string" } }, required: ["topic", "text"], additionalProperties: false } },
+  { name: "saga_reading_add", description: "Legg en lenke i leseinnboksen (radaren destillerer ukentlig).", input_schema: { type: "object", properties: { url: { type: "string" }, title: { type: "string" } }, required: ["url"], additionalProperties: false } },
+  { name: "saga_week_focus", description: "Sett ukens fokus i mål-treet (svaret på ukesbriefens drep/doble-spørsmål).", input_schema: { type: "object", properties: { focus: { type: "string" } }, required: ["focus"], additionalProperties: false } },
+  { name: "saga_people_add", description: "Privat relasjons-CRM (ALDRI kunder/kolleger): legg til person med valgfri bursdag (YYYY-MM-DD), kontakt-kadens i dager og notat.", input_schema: { type: "object", properties: { name: { type: "string" }, relation: { type: "string" }, birthday: { type: "string" }, cadenceDays: { type: "number" }, note: { type: "string" } }, required: ["name"], additionalProperties: false } },
+  { name: "saga_draft", description: "Lagre et UTKAST til utadrettet innhold (e-post/post/tilbud) i sannhetslagets drafts/. Utkast sendes ALDRI av systemet – sending er eierens handling.", input_schema: { type: "object", properties: { kind: { type: "string" }, title: { type: "string" }, body: { type: "string" } }, required: ["kind", "title", "body"], additionalProperties: false } },
 ];
 
-function execTool(name, input) {
+const newId = () => Math.random().toString(36).slice(2, 10);
+
+async function execTool(name, input) {
   const B = window.SAGA && window.SAGA.bridge;
+  const T = window.CF && window.CF.Truth;
+  const today = () => new Date().toISOString().slice(0, 10);
   try {
+    /* --- sannhetslag-verktøyene (async, private datarepoet) --- */
+    if (name === "saga_agenda") {
+      if (input.action === "list") {
+        const { json } = await T.read("data/agenda.json");
+        const open = ((json && json.items) || []).filter((i) => !["gjort", "avvist"].includes(i.status));
+        return JSON.stringify(open.map((i) => ({ id: i.id, title: i.title, due: i.due, status: i.status })));
+      }
+      if (input.action === "add") {
+        const id = newId();
+        await T.update("data/agenda.json", (j) => { const d = j || { schema: 1, items: [] }; d.items.push({ id, title: String(input.title || ""), due: input.due || null, status: "ny", source: { from: "assistenten", addedAt: new Date().toISOString() } }); d.updatedAt = new Date().toISOString(); return d; }, "agenda: + " + input.title);
+        return "Lagt i agendaen (id " + id + ")." + (input.due ? " Purres fra " + input.due + "." : "");
+      }
+      await T.update("data/agenda.json", (j) => { const it = (j.items || []).find((x) => x.id === input.id); if (!it) throw new Error("fant ikke id " + input.id); it.status = input.action === "done" ? "gjort" : "avvist"; it.closedAt = new Date().toISOString(); j.updatedAt = it.closedAt; return j; }, "agenda: " + input.action + " " + input.id);
+      return "Posten er " + (input.action === "done" ? "gjort" : "avvist") + ".";
+    }
+    if (name === "saga_journal") {
+      if (input.action === "list") {
+        const { json } = await T.read("data/decisions-journal.json");
+        return JSON.stringify(((json && json.entries) || []).slice(0, 10).map((e) => ({ id: e.id, decision: e.decision, reviewAt: e.reviewAt, dømt: !!e.outcome })));
+      }
+      if (input.action === "add") {
+        if (!input.expectation || !input.reviewAt) return "Avvist: en journalpost UTEN forventning og etterprøvingsdato kan ikke etterprøves. Be eieren om begge.";
+        const id = newId();
+        await T.update("data/decisions-journal.json", (j) => { const d = j || { schema: 1, entries: [] }; d.entries.unshift({ id, at: new Date().toISOString(), decision: String(input.decision || ""), expectation: String(input.expectation), reviewAt: input.reviewAt, outcome: null }); return d; }, "journal: + " + (input.decision || "").slice(0, 40));
+        return "Journalført (id " + id + "). Etterprøves " + input.reviewAt + " – nattskiftet minner deg.";
+      }
+      await T.update("data/decisions-journal.json", (j) => { const e = (j.entries || []).find((x) => x.id === input.id); if (!e) throw new Error("fant ikke id " + input.id); e.outcome = { at: new Date().toISOString(), verdict: input.verdict, note: input.note || "" }; return j; }, "journal: dom " + input.verdict + " på " + input.id);
+      return "Dommen er felt: " + input.verdict + ". Treffsikkerheten oppdateres i ukesbriefen.";
+    }
+    if (name === "saga_mode") {
+      if (input.mode !== "normal" && !input.until) return "Avvist: fokus/ferie krever until-dato (ellers glemmes du i stillhet).";
+      await T.update("data/mode.json", (j) => ({ ...(j || { schema: 1 }), mode: input.mode, until: input.mode === "normal" ? null : input.until }), "modus: " + input.mode);
+      return "Modus satt: " + input.mode + (input.until ? " til " + input.until : "") + ". Gjelder fra neste brief.";
+    }
+    if (name === "saga_remember") {
+      await T.update("memory/index.json", (j) => { const d = j || { schema: 1, entries: [] }; d.entries.unshift({ at: new Date().toISOString(), topic: String(input.topic || ""), text: String(input.text || "") }); return d; }, "minne: " + input.topic);
+      return "Husket under «" + input.topic + "».";
+    }
+    if (name === "saga_reading_add") {
+      await T.update("data/reading.json", (j) => { const d = j || { schema: 1, items: [] }; d.items.unshift({ id: newId(), url: String(input.url || ""), title: input.title || "", addedAt: new Date().toISOString(), status: "ulest" }); return d; }, "lesekø: + " + (input.title || input.url));
+      return "Lagt i leseinnboksen.";
+    }
+    if (name === "saga_week_focus") {
+      await T.update("data/goals.json", (j) => ({ ...(j || { schema: 1 }), week: { focus: String(input.focus || ""), setAt: today() } }), "mål: ukens fokus");
+      return "Ukens fokus er satt – vises i mål-treet i morgenbriefen.";
+    }
+    if (name === "saga_people_add") {
+      await T.update("data/people.json", (j) => { const d = j || { schema: 1, people: [] }; d.people.push({ id: newId(), name: String(input.name || ""), relation: input.relation || "", birthday: input.birthday || null, lastContactAt: today(), cadenceDays: input.cadenceDays || null, note: input.note || "" }); return d; }, "relasjoner: + " + input.name);
+      return "Lagt til i det private relasjons-CRM-et.";
+    }
+    if (name === "saga_draft") {
+      /* Markdown, ikke JSON – skrives direkte via Gh, bak samme privatvakt */
+      const file = "drafts/" + today() + "-" + (input.title || "utkast").toLowerCase().replace(/[^a-z0-9æøå]+/gi, "-").slice(0, 40) + ".md";
+      const c = window.CF.Sync.config();
+      if (!c.repo || !window.CF.Gh.pat) throw new Error("Sannhetslaget er ikke koblet til.");
+      await window.CF.Sync.assertPrivate(c.repo);
+      const existing = await window.CF.Gh.getFile(c.repo, file, c.branch);
+      await window.CF.Gh.putFile(c.repo, file, c.branch, "# " + input.title + "\n\n(" + input.kind + " – UTKAST, aldri sendt av systemet)\n\n" + input.body + "\n", "utkast: " + input.title, existing ? existing.sha : undefined);
+      return "Utkastet ligger i sannhetslaget (" + file + "). Sending er din handling – aldri min.";
+    }
+
     if (name === "saga_factory_status") {
       const s = B.factoryStatus();
       const pend = B.pending("research").map((r) => ({ id: r.id, prosjekt: r.project, spørsmål: r.question }));
@@ -94,7 +173,10 @@ async function send(text, onEvent) {
       const results = [];
       for (const b of res.content.filter((x) => x.type === "tool_use")) {
         say("tool", b.name);
-        results.push({ type: "tool_result", tool_use_id: b.id, content: execTool(b.name, b.input || {}) });
+        let out;
+        try { out = await execTool(b.name, b.input || {}); }
+        catch (e) { out = "Verktøyfeil: " + e.message; }
+        results.push({ type: "tool_result", tool_use_id: b.id, content: out });
       }
       messages.push({ role: "user", content: results });
       continue;

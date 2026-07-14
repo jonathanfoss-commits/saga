@@ -137,7 +137,21 @@ async function renderBrief() {
     (b.sections || []).map((s) => `<div class="note"><b>${esc(s.title)}:</b> ${(s.lines || []).map(esc).join(" · ")}</div>`).join("") +
     ((b.actions || []).length ? `<div class="note" style="margin-top:6px"><b>Foreslåtte handlinger:</b> ${b.actions.map((a) => esc(a.title)).join(" · ")}</div>` : "") +
     (b.costs ? `<div class="note muted">Nattens AI-kost: ~${esc(String(b.costs.estimateNok ?? "?"))} kr <span class="badge est">estimat</span> · måned: ${esc(String(b.costs.monthNok ?? "?"))} / ${esc(String(b.costs.capNok ?? "?"))} kr tak</div>` : "") +
+    (window.speechSynthesis ? `<button class="small" id="briefSpeak" style="margin-top:8px">🔊 Hør briefen</button>` : "") +
     `</div>`;
+  /* Lydbrief (5.0 B2): nettleserens egen talesyntese – lokal og gratis */
+  const sp = $("briefSpeak");
+  if (sp) sp.onclick = () => {
+    if (speechSynthesis.speaking) { speechSynthesis.cancel(); sp.textContent = "🔊 Hør briefen"; return; }
+    const text = [b.headline, ...(b.sections || []).map((s) => s.title + ". " + (s.lines || []).join(". "))].join("\n").replace(/[🔴🟡🟠🟢⚪🌟⏱🎂📞⚖️·|_*#`]/gu, " ");
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "nb-NO";
+    const voice = speechSynthesis.getVoices().find((v) => v.lang && v.lang.startsWith("nb")) || speechSynthesis.getVoices().find((v) => v.lang && v.lang.startsWith("no"));
+    if (voice) u.voice = voice;
+    u.onend = () => { sp.textContent = "🔊 Hør briefen"; };
+    sp.textContent = "⏹ Stopp";
+    speechSynthesis.speak(u);
+  };
 }
 
 /* Selskapene: 90-dagersklokke, ærlig inntekt og åpne styresaker fra
@@ -180,8 +194,53 @@ async function renderCompanies() {
   }).join("");
 }
 
+/* Agenda (5.0 C1): livsadmin-poster fra sannhetslaget med gjort/avvis-knapper.
+ * Skrives tilbake via Truth (read-modify-write m/sha, bak privatvakten). */
+let agendaCache = null, agendaFetched = false;
+async function renderAgenda() {
+  const el = $("ccAgenda");
+  if (!el) return;
+  if (!agendaFetched) {
+    agendaFetched = true;
+    const s = window.CF.Sync.status();
+    if (s.configured) {
+      try {
+        const f = await window.CF.Gh.getFile(s.repo, "data/agenda.json", window.CF.Sync.config().branch || "main");
+        if (f) agendaCache = JSON.parse(f.content);
+      } catch { /* tom tilstand under */ }
+    }
+  }
+  const open = ((agendaCache && agendaCache.items) || []).filter((i) => !["gjort", "avvist"].includes(i.status));
+  if (!open.length) {
+    el.innerHTML = `<div class="panel muted">Ingen åpne agenda-poster. Dagskiftet (e-post/kalender) og assistenten fyller på – eller be assistenten: «legg i agendaen: …».</div>`;
+    return;
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  el.innerHTML = open.slice(0, 8).map((i) => {
+    const sev = i.due && i.due < today ? "sev0" : i.due === today ? "sev1" : "sev2";
+    return `<div class="alert ${sev}"><div>
+      <div class="p">${esc(i.title)}</div>
+      <div class="d">${i.due ? `frist ${esc(i.due)}` : "ingen frist"}${i.source && i.source.from ? ` · fra ${esc(i.source.from)}` : ""}</div></div>
+      <div class="actions"><button class="small" data-ag-done="${esc(i.id)}">✅ Gjort</button><button class="small" data-ag-dismiss="${esc(i.id)}">✕ Avvis</button></div>
+    </div>`;
+  }).join("");
+  const close = async (id, status) => {
+    try {
+      agendaCache = await window.CF.Truth.update("data/agenda.json", (j) => {
+        const it = (j.items || []).find((x) => x.id === id);
+        if (it) { it.status = status; it.closedAt = new Date().toISOString(); j.updatedAt = it.closedAt; }
+        return j;
+      }, "agenda: " + status + " " + id);
+      renderAgenda();
+    } catch (e) { alert("Feil: " + e.message); }
+  };
+  el.querySelectorAll("[data-ag-done]").forEach((b) => { b.onclick = () => close(b.dataset.agDone, "gjort"); });
+  el.querySelectorAll("[data-ag-dismiss]").forEach((b) => { b.onclick = () => close(b.dataset.agDismiss, "avvist"); });
+}
+
 function renderCommand() {
   renderBrief();
+  renderAgenda();
   renderCompanies();
   renderOwnerQueue();
   renderLive();
@@ -364,10 +423,61 @@ $("syncPushBtn").onclick = async () => {
 $("syncPullBtn").onclick = async () => {
   if (!confirm("Hente data fra repoet? Lokale data overskrives (eksporter først hvis du er usikker).")) return;
   $("syncPullBtn").disabled = true;
-  try { await window.CF.Sync.pull(); renderSyncStatus(); renderPortfolio(); }
+  try { await window.CF.Sync.pull(); localStorage.removeItem("saga_dirty"); renderSyncStatus(); renderPortfolio(); }
   catch (e) { renderSyncStatus("Feil: " + e.message); }
   $("syncPullBtn").disabled = false;
 };
+
+/* ---------- Auto-synk (5.0 B3): mobil = desktop uten tenking ---------- */
+window.OS.syncBadge = (msg) => {
+  const el = $("syncStatus");
+  if (el) el.textContent = msg + " · " + new Date().toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" });
+};
+$("autoSyncChk").checked = window.CF.Store.get("cf_autosync", true);
+$("autoSyncChk").onchange = () => { window.CF.Store.set("cf_autosync", $("autoSyncChk").checked); };
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") window.CF.AutoSync.onWake(); });
+setTimeout(() => window.CF.AutoSync.onWake(), 800); /* ved oppstart, etter første render */
+
+/* ---------- Modus (5.0 B4) ---------- */
+async function setMode(mode) {
+  let until = null;
+  if (mode !== "normal") {
+    until = prompt(`Til hvilken dato? (YYYY-MM-DD) – ${mode === "fokus" ? "fokus" : "ferie"} uten sluttdato finnes ikke.`);
+    if (!until || !/^\d{4}-\d{2}-\d{2}$/.test(until)) { alert("Trenger en dato på formen YYYY-MM-DD."); return; }
+  }
+  try {
+    await window.CF.Truth.update("data/mode.json", (j) => ({ ...(j || { schema: 1 }), mode, until }), "modus: " + mode);
+    $("modeStatus").textContent = mode === "normal" ? "Normal modus." : `${mode} til ${until} – briefen demper alt uten frist.`;
+  } catch (e) { alert("Feil: " + e.message); }
+}
+$("modeNormalBtn").onclick = () => setMode("normal");
+$("modeFokusBtn").onclick = () => setMode("fokus");
+$("modeFerieBtn").onclick = () => setMode("ferie");
+
+/* ---------- Diktering (5.0 B2): norsk tale rett i Idélab ---------- */
+(() => {
+  const btn = $("dictateBtn");
+  if (!btn) return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { btn.disabled = true; btn.title = "Nettleseren støtter ikke talegjenkjenning."; return; }
+  let rec = null;
+  btn.onclick = () => {
+    if (rec) { rec.stop(); return; }
+    rec = new SR();
+    rec.lang = "nb-NO";
+    rec.continuous = true;
+    rec.interimResults = false;
+    btn.textContent = "⏹ Stopp";
+    rec.onresult = (ev) => {
+      const t = Array.from(ev.results).slice(ev.resultIndex).map((r) => r[0].transcript).join(" ");
+      const ta = $("ideaText");
+      ta.value = (ta.value ? ta.value + " " : "") + t.trim();
+    };
+    rec.onend = () => { btn.textContent = "🎙 Dikter"; rec = null; };
+    rec.onerror = () => { btn.textContent = "🎙 Dikter"; rec = null; };
+    rec.start();
+  };
+})();
 $("integrityBtn").onclick = () => {
   const r = window.CF.Integrity.check();
   $("integrityOut").innerHTML = r.ok
