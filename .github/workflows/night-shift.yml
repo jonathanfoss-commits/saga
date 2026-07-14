@@ -84,7 +84,7 @@ jobs:
           GH_TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
         run: |
           TITLE="Morgenbrief $(date -u +%F)"
-          BODY="$(node -e 'const b=require("./_data/data/brief-latest.json");console.log("**"+b.headline+"** ("+b.mode+")\n\n"+b.sections.map(s=>"### "+s.title+"\n"+s.lines.join("\n")).join("\n\n")+"\n\n_Kost natt: ~"+b.costs.estimateNok+" kr · måned: "+b.costs.monthNok+"/"+b.costs.capNok+" kr (estimat)_")')
+          BODY="$(node -e 'const b=require("./_data/data/brief-latest.json");console.log("**"+b.headline+"** ("+b.mode+")\n\n"+b.sections.map(s=>"### "+s.title+"\n"+s.lines.join("\n")).join("\n\n")+"\n\n_Kost natt: ~"+b.costs.estimateNok+" kr · måned: "+b.costs.monthNok+"/"+b.costs.capNok+" kr (estimat)_")')"
           EXISTING=$(gh issue list -R "$DATA_REPO" --label morgenbrief --state open --json number --jq '.[0].number' || echo "")
           if [ -n "$EXISTING" ]; then
             gh issue comment "$EXISTING" -R "$DATA_REPO" --body "$BODY"
