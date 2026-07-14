@@ -175,7 +175,7 @@ async function renderCompanies() {
     return `<div class="alert ${clockClass}"><div>
       <div class="p">${esc(c.name)}</div>
       <div class="t">${daysLeft !== null ? `⏱ ${daysLeft} dager igjen til ekte signal` : "ingen klokke satt"} · MRR ${esc(String(rev.mrrNok ?? "?"))} kr <span class="badge ${rev.label === "FAKTISK" ? "h" : "est"}">${esc(rev.label || "ukjent")}</span></div>
-      <div class="d">${esc((c.clock && c.clock.signalDefinition || "").split(".")[0])}${c.status && c.status.lastDeploy ? ` · deploy ${esc(c.status.lastDeploy.state)} ${esc(c.status.lastDeploy.at || "")}` : ""}${openCases.length ? ` · ${openCases.length} åpen${openCases.length > 1 ? "ne" : ""} styresak${openCases.length > 1 ? "er" : ""}: ${openCases.map((k) => esc(k.title.split(":")[0])).join(", ")}` : ""}</div>
+      <div class="d">${esc((c.clock && c.clock.signalDefinition || "").split(".")[0])}${c.status && c.status.lastDeploy ? ` · deploy ${esc(c.status.lastDeploy.state)} ${esc(c.status.lastDeploy.at || "")}` : ""}${openCases.length ? ` · ${openCases.length === 1 ? "1 åpen styresak" : openCases.length + " åpne styresaker"}: ${openCases.map((k) => esc(k.title.split(":")[0])).join(", ")}` : ""}</div>
     </div></div>`;
   }).join("");
 }
