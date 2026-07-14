@@ -14,7 +14,7 @@ function check(name, cond, detail) {
 }
 
 (async () => {
-  const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+  const browser = await chromium.launch({ executablePath: process.env.SAGA_CHROMIUM || undefined });
   const ctx = await browser.newContext({ viewport: { width: 1100, height: 850 } });
 
   /* ---------- 1: alle flater laster med tokens + kjerne ---------- */

@@ -1,1 +1,6 @@
 node_modules/
+
+# Forretningsdata hører hjemme i det PRIVATE datarepoet (docs/privacy-audit.md).
+# Lokale agent-kjøringer uten DATA_DIR skriver hit – skal aldri committes.
+data/
+factory-data*.json

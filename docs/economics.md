@@ -35,3 +35,28 @@ under System). Nattskiftet bruker kun repo-secreten.
 
 Morgenbriefen viser månedsforbruk mot tak hver dag. Endre taket bevisst i
 `config/budget.json` (eierbeslutning, commit = revisjonsspor).
+
+## SAGA 3.0-utvidelsen (oppdatert FØR aktivering, 14.07.2026)
+
+Nattskiftet fikk tre nye steg – alle uten nye AI-kall, så kostnadsmodellen over står:
+
+| Steg | AI-kall | Nettverk | Kost |
+|---|---|---|---|
+| Selskapsstatus (`agents/etterpaa-status.js`) | 0 | 1 Vercel API-kall pr. selskap (kun med VERCEL_TOKEN) | 0 kr (Vercel API er gratis) |
+| CFO (`agents/cfo.js`) | 0 | ingen | 0 kr |
+| Grunnlovsjekk (`agents/lib/policy.js`) | 0 | ingen | 0 kr |
+
+Budsjettvakten og kill-switchen i `config/budget.json` gjelder HELE nattskiftet:
+alle steg kjører etter `guard()` – kill-switch/månedstak stopper også de nye
+stegene og statusinnleseren.
+
+## P&L-laget (sannhetslaget, privat)
+
+- `data/pnl.json`: kostnadslinjer pr. selskap m/kilde (FAKTISK/ESTIMAT),
+  vedlikeholdt av styret/eier. `recurring` videreføres automatisk.
+- `data/pnl-status.json`: skrives hver natt – månedens kost/inntekt/netto,
+  forbruk mot grunnlovens 5–15k-ramme og runway mot engangskapitalen.
+- Morgenbriefen viser CFO-linjene daglig; inntekt 0 vises som FAKTISK 0 til
+  en betalingsløsning er i drift.
+- Kumulativ kost pr. selskap skrives til `companies.json` og håndheves mot
+  grunnlovens eksperimenttak (over_cap-brudd i briefen).

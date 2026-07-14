@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "comment": "EKSEMPEL på grunnlovens skjema. Den EKTE grunnloven er privat (eiers økonomiske rammer) og ligger i sannhetslaget: saga-data/constitution.json, generert fra eierprofilen med kildereferanse pr. regel. Policy-motoren (agents/lib/policy.js) leser CONSTITUTION_FILE; finnes ingen ekte grunnlov kjører den i example-modus og sier det ærlig i morgenbriefen. Terskler med null = ukjent → motoren flagger at terskelen mangler i stedet for å gjette.",
+  "source": { "file": null, "updatedAt": null, "sha256": null },
+  "northStar": {
+    "ref": "eksempel",
+    "text": "Første 1 000 kr/mnd i gjentakende inntekt fra ett prosjekt.",
+    "monthlyRecurringNok": 1000
+  },
+  "thresholds": {
+    "validationWindowDays": { "value": 90, "ref": "eksempel" },
+    "maxActiveBets": { "value": 2, "ref": "eksempel" },
+    "perExperimentCapNok": { "value": null, "ref": "settes i privat constitution.json" },
+    "monthlyInvestmentNok": { "min": null, "max": null, "ref": "settes i privat constitution.json" },
+    "oneOffCapitalNok": { "value": null, "ref": "settes i privat constitution.json" }
+  },
+  "mandate": {
+    "ref": "fritt på drift, spør om penger",
+    "free": ["analyse", "research", "planlegging", "bygging", "koding", "publisering_egne_flater", "optimalisering", "utkast", "vedlikehold", "rapportering", "forslag"],
+    "ownerGate": ["pengebruk", "avtale", "forpliktelse", "utsendelse", "domenekjop", "verktoykjop", "annonsering", "tjenestekjop", "irreversibel_handling", "investorkontakt"],
+    "note": "Ukjente kategorier behandles som ownerGate (fail-closed)."
+  },
+  "investors": { "ref": "eksempel", "accessNok": { "min": null, "max": null }, "rule": "Opsjon som utløses av bevis. Aldri initiere kontakt uten eksplisitt godkjenning." },
+  "protected": [
+    { "ref": "eksempel", "rule": "Arbeidsgiver er fredet (se SEPARATION.md)." },
+    { "ref": "eksempel", "rule": "Ingen lånefinansiering; ingen satsinger som truer privatøkonomisk trygghet." }
+  ],
+  "principles": []
+}

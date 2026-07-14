@@ -19,7 +19,7 @@ GitHub Actions-agenter som jobber når nettleseren er lukket.
 index.html + os/     SAGA OS-skallet
 core/                motorene: saga-core (bro), factory, aeis, chat
 shared/              design-tokens (mørk Tiffany), logo
-agents/ + data/      nattskiftet (Actions) og dets JSON-output
+agents/              nattskiftet (Actions) – output går til PRIVAT datarepo (saga-data)
 config/              budsjettak og kill-switch for agentene
 tools/saga-cli.js    `npm run saga improve` – forbedringsloopen
 tests/               testpakken (npm test)

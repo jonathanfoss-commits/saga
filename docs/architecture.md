@@ -68,7 +68,9 @@ AEIS speiler hovedboks-innslag (beslutninger, radar). Kryssfane-oppdatering via
 ```
 index.html + os/{ui,board,chat}.js        skallet: 8 flater, palett, dokk (Cmd+J)
 core/{saga-core,factory,aeis,chat}.js     motorer – DOM-fritt unntatt visningslagene
-data/  ← .github/workflows/night-shift.yml (styremøte → radar → morgenbrief)
+saga-data (PRIVAT repo) ← nattskiftet     sannhetslaget: factory-data.json,
+                                          data/{briefs,board,radar,companies,
+                                          pnl*,policy-status}, constitution.json
 ```
 
 - Flate-kontrakt: `window.OS.registerView(navn, render)`; skallet eier ruting
@@ -78,6 +80,8 @@ data/  ← .github/workflows/night-shift.yml (styremøte → radar → morgenbri
   hovedboken til selskapet (`projectId`).
 - Dokk-kontrakt: chat-boksen er ETT element som flyttes mellom dokk og flate;
   kontekst (aktivt selskap/flate) injiseres i systemprompten ved send.
-- Nattskiftet leser kun synkede `data/`-filer og skriver kun `data/` –
-  se docs/automation.md og docs/economics.md. Morgenbriefen konsumeres av
-  forsiden via `data/brief-latest.json` (schema 1).
+- Nattskiftet (SAGA 3.0): sjekker ut det PRIVATE datarepoet, kjører
+  selskapsstatus → CFO → styremøte (m/grunnlovsjekk) → radar → morgenbrief,
+  og committer kun dit. Forretningsdata finnes ALDRI i dette repoet
+  (tests/privacy.test.js håndhever; se docs/privacy-audit.md). Forsiden leser
+  brief/selskaper fra datarepoet via PAT; lokal `data/`-fallback er kun dev.

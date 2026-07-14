@@ -102,22 +102,34 @@ function renderLive() {
   document.querySelectorAll("#ccLive [data-al-open]").forEach((b) => { b.onclick = () => { goTab("portfolio"); showProject(b.dataset.alOpen); }; });
 }
 
-/* Morgenbrief: nattskiftets siste leveranse (data/brief-latest.json, committet
- * av Actions-agentene). Statisk fil – 404 betyr ærlig «ikke levert enda». */
+/* Morgenbrief: nattskiftets siste leveranse. Sannhetslaget er det PRIVATE
+ * datarepoet (data/brief-latest.json der, skrevet av Actions-agentene) – leses
+ * via PAT når synk er konfigurert. Fallback til lokal fil dekker kun utvikling/
+ * tester; i det offentlige repoet finnes ingen data (privacy-audit). */
 let briefCache = null, briefFetched = false;
 async function renderBrief() {
   const el = $("ccBrief");
   if (!briefFetched) {
     briefFetched = true;
-    try {
-      const r = await fetch("data/brief-latest.json", { cache: "no-store" });
-      if (r.ok) briefCache = await r.json();
-    } catch { /* offline/lokalt uten data – vis tom tilstand */ }
+    const s = window.CF.Sync.status();
+    if (s.configured) {
+      try {
+        const f = await window.CF.Gh.getFile(s.repo, "data/brief-latest.json", window.CF.Sync.config().branch || "main");
+        if (f) briefCache = JSON.parse(f.content);
+      } catch { /* feil PAT/nett – vis tom tilstand, synk-panelet forklarer */ }
+    }
+    if (!briefCache) {
+      try {
+        const r = await fetch("data/brief-latest.json", { cache: "no-store" });
+        if (r.ok) briefCache = await r.json();
+      } catch { /* offline/lokalt uten data – vis tom tilstand */ }
+    }
   }
   const b = briefCache;
   if (!b || !b.headline) {
-    el.innerHTML = `<div class="panel muted">Nattskiftet har ikke levert enda. Agentene kjører når repoet har
-      <b>ANTHROPIC_API_KEY</b> som secret (se DIN TUR under System) – inntil da er alt her manuelt arbeid.</div>`;
+    el.innerHTML = `<div class="panel muted">Nattskiftet har ikke levert enda. Agentene kjører når kode-repoet har
+      <b>ANTHROPIC_API_KEY</b> og <b>DATA_REPO_TOKEN</b> som secrets, og de skriver til det PRIVATE datarepoet
+      (se DIN TUR under System) – inntil da er alt her manuelt arbeid.</div>`;
     return;
   }
   const modeBadge = b.mode === "live" ? "" : ` <span class="badge test">${esc(b.mode === "mock" ? "TEST" : b.mode)}</span>`;
@@ -128,8 +140,49 @@ async function renderBrief() {
     `</div>`;
 }
 
+/* Selskapene: 90-dagersklokke, ærlig inntekt og åpne styresaker fra
+ * sannhetslagets data/companies.json – samme kilde og lastemønster som briefen. */
+let companiesCache = null, companiesFetched = false;
+async function renderCompanies() {
+  const el = $("ccCompanies");
+  if (!el) return;
+  if (!companiesFetched) {
+    companiesFetched = true;
+    const s = window.CF.Sync.status();
+    if (s.configured) {
+      try {
+        const f = await window.CF.Gh.getFile(s.repo, "data/companies.json", window.CF.Sync.config().branch || "main");
+        if (f) companiesCache = JSON.parse(f.content);
+      } catch { /* vis tom tilstand */ }
+    }
+    if (!companiesCache) {
+      try {
+        const r = await fetch("data/companies.json", { cache: "no-store" });
+        if (r.ok) companiesCache = await r.json();
+      } catch { /* offline/lokalt uten data */ }
+    }
+  }
+  const doc = companiesCache;
+  if (!doc || !(doc.companies || []).length) {
+    el.innerHTML = `<div class="panel muted">Ingen selskaper i sannhetslaget enda. Selskapsregisteret (data/companies.json i datarepoet) fylles av styret og nattskiftet.</div>`;
+    return;
+  }
+  el.innerHTML = doc.companies.map((c) => {
+    const daysLeft = c.clock && c.clock.deadline ? Math.ceil((new Date(c.clock.deadline) - Date.now()) / 86400000) : null;
+    const rev = c.revenue || {};
+    const openCases = (c.cases || []).filter((k) => k.status === "til_behandling");
+    const clockClass = daysLeft !== null && daysLeft <= 14 ? "sev0" : daysLeft !== null && daysLeft <= 30 ? "sev1" : "sev2";
+    return `<div class="alert ${clockClass}"><div>
+      <div class="p">${esc(c.name)}</div>
+      <div class="t">${daysLeft !== null ? `⏱ ${daysLeft} dager igjen til ekte signal` : "ingen klokke satt"} · MRR ${esc(String(rev.mrrNok ?? "?"))} kr <span class="badge ${rev.label === "FAKTISK" ? "h" : "est"}">${esc(rev.label || "ukjent")}</span></div>
+      <div class="d">${esc((c.clock && c.clock.signalDefinition || "").split(".")[0])}${c.status && c.status.lastDeploy ? ` · deploy ${esc(c.status.lastDeploy.state)} ${esc(c.status.lastDeploy.at || "")}` : ""}${openCases.length ? ` · ${openCases.length === 1 ? "1 åpen styresak" : openCases.length + " åpne styresaker"}: ${openCases.map((k) => esc(k.title.split(":")[0])).join(", ")}` : ""}</div>
+    </div></div>`;
+  }).join("");
+}
+
 function renderCommand() {
   renderBrief();
+  renderCompanies();
   renderOwnerQueue();
   renderLive();
   /* Trakten: nuller vises ærlig – det er hele poenget */
@@ -251,6 +304,32 @@ function renderOwnerQueueFull() {
   $("ownerQueueFull").innerHTML = q.length
     ? `<div class="panel">${q.map((x, i) => `<div style="margin-bottom:14px"><b>${i + 1}. ${esc(x.title)}</b><div class="note"><b>Hvorfor:</b> ${esc(x.why)}\n<b>Slik:</b> ${esc(x.how)}</div></div>`).join("")}</div>`
     : `<div class="panel" style="border-color:rgba(123,216,143,.4)">Køen er tom – fabrikken er selvgående. 🟢</div>`;
+  renderSagaCases();
+}
+
+/* Sakskartet (Saga Utvikling): eier-saker med beslutningsunderlag fra
+ * sannhetslagets data/saga-cases.json – vises under DIN TUR i System. */
+let sagaCasesCache = null, sagaCasesFetched = false;
+async function renderSagaCases() {
+  const host = $("ownerQueueFull");
+  if (!host) return;
+  if (!sagaCasesFetched) {
+    sagaCasesFetched = true;
+    const s = window.CF.Sync.status();
+    if (s.configured) {
+      try {
+        const f = await window.CF.Gh.getFile(s.repo, "data/saga-cases.json", window.CF.Sync.config().branch || "main");
+        if (f) sagaCasesCache = JSON.parse(f.content);
+      } catch { /* uten datarepo: ingen sakskart å vise */ }
+    }
+  }
+  const open = ((sagaCasesCache && sagaCasesCache.cases) || []).filter((c) => c.status === "til_beslutning");
+  let panel = document.getElementById("sagaCasesPanel");
+  if (!open.length) { if (panel) panel.remove(); return; }
+  if (!panel) { panel = document.createElement("div"); panel.id = "sagaCasesPanel"; host.after(panel); }
+  panel.innerHTML = `<div class="panel" style="border-color:rgba(255,209,102,.35)"><h3>SAKSKARTET – ${open.length} EIER-SAKER (Saga Utvikling)</h3>` +
+    open.map((c) => `<div style="margin-bottom:14px"><b>${esc(c.id)}: ${esc(c.title)}</b> <span class="badge est">${esc(c.deadline)}</span><div class="note"><b>Innstilling:</b> ${esc(c.recommendation)}\n<b>Kost:</b> ${esc((c.costNok && c.costNok.estimate) || "?")} · <b>Risiko:</b> ${esc(c.risk)}${(c.dependsOn || []).length ? ` · <b>Etter:</b> ${c.dependsOn.map(esc).join(", ")}` : ""}</div></div>`).join("") +
+    `</div>`;
 }
 
 function renderSyncStatus(msg) {

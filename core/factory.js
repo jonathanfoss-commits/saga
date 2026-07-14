@@ -2183,6 +2183,13 @@ const Gh = {
     if (r.status === 404 || !r.json) return null;
     return { sha: r.json.sha, content: b64decodeUtf8(r.json.content || "") };
   },
+  /* Privatvakt: forretningsdata skal ALDRI til et offentlig repo (D18/privacy-audit).
+   * null = repoet finnes ikke / PAT mangler tilgang; ellers true/false. */
+  async repoIsPrivate(repo) {
+    const r = await this.request("GET", `/repos/${repo}`);
+    if (r.status === 404 || !r.json || typeof r.json.private !== "boolean") return null;
+    return r.json.private;
+  },
   async putFile(repo, path, branch, content, message, sha) {
     const body = { message, branch, content: b64encodeUtf8(content) };
     if (sha) body.sha = sha;
@@ -2199,10 +2206,18 @@ const Sync = {
     const c = this.config();
     return { configured: !!(c.repo && Gh.pat), repo: c.repo, lastSyncAt: c.lastSyncAt };
   },
+  /* Privatvakt før HVER synk-operasjon: stopper både skriv og les mot offentlige
+   * repoer – lesing derfra betyr at dataene allerede ligger offentlig. */
+  async assertPrivate(repo) {
+    const priv = await Gh.repoIsPrivate(repo);
+    if (priv === null) throw new Error(`Finner ikke ${repo} (eller PAT-en mangler tilgang). Sjekk navnet under System → Synk.`);
+    if (priv === false) throw new Error(`STOPP: ${repo} er OFFENTLIG. Forretningsdata skal aldri i et offentlig repo – opprett et PRIVAT datarepo (se DIN TUR) og bytt.`);
+  },
   /* Push: siste-skriver-vinner, men taperen sikkerhetskopieres i repoet først */
   async push() {
     const c = this.config();
     if (!c.repo) throw new Error("Ingen datarepo konfigurert (eier-oppgave – se DIN TUR).");
+    await this.assertPrivate(c.repo);
     const data = Store.exportAll();
     let r = await Gh.putFile(c.repo, this.DATA_PATH, c.branch, data, "factory: synk " + new Date().toISOString(), c.lastSha || undefined);
     if (r.status === 409 || r.status === 422) {
@@ -2221,6 +2236,7 @@ const Sync = {
   async pull() {
     const c = this.config();
     if (!c.repo) throw new Error("Ingen datarepo konfigurert (eier-oppgave – se DIN TUR).");
+    await this.assertPrivate(c.repo);
     const remote = await Gh.getFile(c.repo, this.DATA_PATH, c.branch);
     if (!remote) throw new Error("Fant ingen synkdata i repoet enda – kjør «Synk nå» først fra enheten som har dataene.");
     Store.importAll(remote.content);
@@ -2381,7 +2397,8 @@ const OwnerQueue = {
     const q = [];
     if (!Store.apiKey) q.push({ id: "apikey", title: "Legg inn API-nøkkel", why: "Låser opp alle AI-kjøringer (vurdering, byggekjede).", how: "platform.claude.com → API keys → Create key → lim inn under System." });
     if (!Gh.pat) q.push({ id: "pat", title: "Lag GitHub-PAT og lim inn", why: "Låser opp synk på tvers av enheter og publisering av live tester.", how: "github.com → Settings → Developer settings → Fine-grained tokens → gi KUN contents-lese/skrive til datarepoet og Pages-repoet → lim inn under System → Synk & publisering. Lagres kun i denne nettleseren, aldri i eksport." });
-    if (!Sync.config().repo) q.push({ id: "syncrepo", title: "Opprett PRIVAT datarepo og angi navnet", why: "Dataene dine overlever nettleseren og synkes mellom telefon og desktop, med commit-historikk som revisjonsspor.", how: "github.com → New repository → f.eks. «factory-data» (Private) → skriv owner/factory-data under System → Synk." });
+    if (!Sync.config().repo) q.push({ id: "syncrepo", title: "Opprett PRIVAT datarepo og angi navnet", why: "Dataene dine overlever nettleseren og synkes mellom telefon og desktop, med commit-historikk som revisjonsspor. Privat repo er sannhetslaget – forretningsdata skal aldri i det offentlige kode-repoet.", how: "github.com → New repository → «saga-data» (VELG PRIVATE) → skriv owner/saga-data under System → Synk. Appen nekter å synke mot offentlige repoer." });
+    if (Sync.config().repo && Publish.config().repo && Sync.config().repo === Publish.config().repo) q.push({ id: "syncpublic", title: "KRITISK: datarepoet er det samme som det offentlige Pages-repoet", why: "Alt du synker blir offentlig lesbart. Synk er sperret til dette er rettet.", how: "Opprett et PRIVAT repo «saga-data» og skriv owner/saga-data som datarepo under System → Synk." });
     if (!Publish.config().repo) q.push({ id: "pubrepo", title: "Angi Pages-repo for live tester", why: "Falske dører publiseres til en ekte URL på minutter.", how: "Bruk et offentlig repo med GitHub Pages aktivert (f.eks. dette repoet) → skriv owner/repo under System → Publisering." });
     for (const p of Projects.list()) {
       if (p.test) continue;
@@ -2389,7 +2406,7 @@ const OwnerQueue = {
       if (p.landing && !p.landing.formEndpoint) q.push({ id: "form-" + p.id, title: `Skjema-endepunkt for ventelisten («${p.name}»)`, why: "Uten endepunkt samles ikke påmeldinger – testen måler ingenting.", how: "formspree.io → New form → kopier URL → regenerer landingssiden med endepunktet.", projectId: p.id });
     }
     if (!Projects.list().some((p) => !p.test)) q.push({ id: "realidea", title: "Velg fabrikkens første EKTE idé", why: "Trakten forblir null til et ekte prosjekt kjøres.", how: "Skriv idéen i Idélab (eller velg fra innboksen) og kjør fabrikken med API-nøkkelen." });
-    q.push({ id: "mergemain", title: "Merge fabrikken til main (PR)", why: "Gjør Control Center live på GitHub Pages med fast URL.", how: "Be Claude lage PR-en, eller merge branchen claude/company-factory-build-bp8pnz selv." });
+    q.push({ id: "mergemain", title: "Merge siste arbeidsbranch til main (PR)", why: "Gjør siste versjon live på GitHub Pages med fast URL.", how: "Be Claude lage PR-en, eller merge arbeidsbranchen (nå: claude/saga-3-reality) selv." });
     return q;
   },
 };

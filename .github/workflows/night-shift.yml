@@ -1,17 +1,25 @@
 name: SAGA night shift
 
+# PERSONVERNKONTRAKT (docs/privacy-audit.md): dette repoet er OFFENTLIG.
+# Nattskiftet leser og skriver forretningsdata KUN i det private datarepoet
+# (DATA_REPO, via DATA_REPO_TOKEN). Ingenting agentene produserer – briefs,
+# protokoller, radar, kostnadslogg, Issues – skal noensinne inn i dette repoet.
+
 on:
   schedule:
     - cron: "0 4 * * *"   # hver natt 04:00 UTC (05/06 norsk tid)
   workflow_dispatch:
 
 permissions:
-  contents: write
-  issues: write
+  contents: read
+  issues: write   # kun for den generiske «ikke konfigurert»-Issuen (uten data)
 
 concurrency:
   group: night-shift
   cancel-in-progress: false
+
+env:
+  DATA_REPO: jonathanfoss-commits/saga-data
 
 jobs:
   night:
@@ -19,15 +27,49 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Agentene skriver KUN under data/. Uten secret skrives en ærlig
-      # «ikke konfigurert»-brief (ingen AI-kall). Kill-switch/budsjettak
-      # håndheves i agents/lib/common.js.
+      - name: Sjekk konfigurasjon
+        id: cfg
+        run: echo "hasToken=${{ secrets.DATA_REPO_TOKEN != '' }}" >> "$GITHUB_OUTPUT"
+
+      # Uten DATA_REPO_TOKEN finnes ikke sannhetslaget for agentene. Da varsles
+      # eieren med en GENERISK Issue her (ingen forretningsdata) – aldri en stille feil.
+      - name: Varsle at nattskiftet mangler datarepo-tilgang
+        if: steps.cfg.outputs.hasToken != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TITLE="Nattskiftet er ikke konfigurert (mangler DATA_REPO_TOKEN)"
+          BODY="Nattskiftet trenger en fine-grained PAT med contents- og issues-tilgang (read/write) til det PRIVATE datarepoet \`${DATA_REPO}\`, lagret som secret \`DATA_REPO_TOKEN\` i dette repoet (Settings → Secrets → Actions). Uten den kjører ingen agenter – forretningsdata skal aldri hit."
+          EXISTING=$(gh issue list --label morgenbrief --state open --json number --jq '.[0].number' || echo "")
+          if [ -n "$EXISTING" ]; then
+            gh issue edit "$EXISTING" --title "$TITLE" --body "$BODY"
+          else
+            gh label create morgenbrief --color 0ABAB5 --description "Nattskiftets leveranser" 2>/dev/null || true
+            gh issue create --title "$TITLE" --label morgenbrief --body "$BODY"
+          fi
+
+      - name: Hent det private datarepoet (sannhetslaget)
+        if: steps.cfg.outputs.hasToken == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: jonathanfoss-commits/saga-data
+          token: ${{ secrets.DATA_REPO_TOKEN }}
+          path: _data
+
+      # Agentene skriver KUN under _data/ (det private repoet). Uten
+      # ANTHROPIC_API_KEY skrives en ærlig «ikke konfigurert»-brief (ingen
+      # AI-kall). Kill-switch/budsjettak håndheves i agents/lib/common.js.
       - name: Kjør nattskiftet
+        if: steps.cfg.outputs.hasToken == 'true'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DATA_DIR: ${{ github.workspace }}/_data/data
+          SYNC_FILE: ${{ github.workspace }}/_data/factory-data.json
         run: node agents/night-shift.js
 
-      - name: Commit nattens data
+      - name: Commit nattens data til det private repoet
+        if: steps.cfg.outputs.hasToken == 'true'
+        working-directory: _data
         run: |
           git config user.name "saga-night-shift"
           git config user.email "actions@users.noreply.github.com"
@@ -36,17 +78,18 @@ jobs:
           git commit -m "data(natt): morgenbrief $(date -u +%F)"
           git push
 
-      - name: Morgenbrief som Issue (mobil-push via GitHub-appen)
+      - name: Morgenbrief som Issue i det private repoet (mobil-push via GitHub-appen)
+        if: steps.cfg.outputs.hasToken == 'true'
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
         run: |
           TITLE="Morgenbrief $(date -u +%F)"
-          BODY="$(node -e 'const b=require("./data/brief-latest.json");console.log("**"+b.headline+"** ("+b.mode+")\n\n"+b.sections.map(s=>"### "+s.title+"\n"+s.lines.join("\n")).join("\n\n")+"\n\n_Kost natt: ~"+b.costs.estimateNok+" kr · måned: "+b.costs.monthNok+"/"+b.costs.capNok+" kr (estimat)_")')
-          EXISTING=$(gh issue list --label morgenbrief --state open --json number --jq '.[0].number' || echo "")
+          BODY="$(node -e 'const b=require("./_data/data/brief-latest.json");console.log("**"+b.headline+"** ("+b.mode+")\n\n"+b.sections.map(s=>"### "+s.title+"\n"+s.lines.join("\n")).join("\n\n")+"\n\n_Kost natt: ~"+b.costs.estimateNok+" kr · måned: "+b.costs.monthNok+"/"+b.costs.capNok+" kr (estimat)_")')
+          EXISTING=$(gh issue list -R "$DATA_REPO" --label morgenbrief --state open --json number --jq '.[0].number' || echo "")
           if [ -n "$EXISTING" ]; then
-            gh issue comment "$EXISTING" --body "$BODY"
-            gh issue edit "$EXISTING" --title "$TITLE"
+            gh issue comment "$EXISTING" -R "$DATA_REPO" --body "$BODY"
+            gh issue edit "$EXISTING" -R "$DATA_REPO" --title "$TITLE"
           else
-            gh label create morgenbrief --color 0ABAB5 --description "Nattskiftets leveranser" 2>/dev/null || true
-            gh issue create --title "$TITLE" --label morgenbrief --body "$BODY"
+            gh label create morgenbrief -R "$DATA_REPO" --color 0ABAB5 --description "Nattskiftets leveranser" 2>/dev/null || true
+            gh issue create -R "$DATA_REPO" --title "$TITLE" --label morgenbrief --body "$BODY"
           fi

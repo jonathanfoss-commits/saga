@@ -57,16 +57,20 @@ Execute Command-node med kommandoen over gjør samme jobb.
 ## Nattskiftet (GitHub Actions – repo-agentene)
 
 `.github/workflows/night-shift.yml` kjører hver natt (04:00 UTC) og på knapp:
-styremøte i nattmodus → radar → morgenbrief. Output committes som JSON under
-`data/` (git-historikk = revisjonsspor) og publiseres som GitHub Issue med
-etiketten `morgenbrief` (= gratis mobilvarsel via GitHub-appen).
+selskapsstatus → CFO → styremøte (m/grunnlovsjekk) → radar → morgenbrief.
+Output committes som JSON i det PRIVATE datarepoet `saga-data` (git-historikk
+= revisjonsspor) og publiseres som GitHub Issue DER med etiketten `morgenbrief`
+(= gratis mobilvarsel via GitHub-appen). Dette offentlige repoet mottar aldri
+forretningsdata (docs/privacy-audit.md; tests/privacy.test.js håndhever).
 
 Sikkerhetskontrakt (`agents/lib/common.js`, skal ikke svekkes):
-- Nøkkel kun fra repo-secreten `ANTHROPIC_API_KEY` (eier-handling å legge inn)
+- Nøkler kun fra repo-secrets: `ANTHROPIC_API_KEY` (AI) og `DATA_REPO_TOKEN`
+  (fine-grained PAT mot saga-data) – begge eier-handlinger å legge inn
 - Harde tak i `config/budget.json`; kill-switch = opprett `config/KILL_SWITCH`
-- Agentene skriver kun under `data/` – aldri kode. Kode-endringer går
+- Agentene skriver kun i datarepoets `data/` – aldri kode. Kode-endringer går
   fortsatt utelukkende via `saga improve` → branchen `saga/auto-improve` → PR
-- Uten secret/over tak skrives en ærlig brief om hvorfor natten var stille
+- Uten secrets/over tak skrives/varsles en ærlig melding om hvorfor natten var
+  stille (uten DATA_REPO_TOKEN: generisk Issue i kode-repoet, uten data)
 
 Test lokalt: `MOCK_LLM=1 node agents/night-shift.js` (ingen nettverk).
 Økonomi og takbegrunnelse: `docs/economics.md`.

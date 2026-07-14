@@ -3,15 +3,19 @@
  * eieren tar dem selv videre til Idélab (ingen auto-intake om natten).
  */
 "use strict";
-const { dataPath, readJSON, writeJSON, llm, today } = require("./lib/common");
+const { dataPath, syncData, readJSON, writeJSON, llm, today } = require("./lib/common");
 
 const MOCK_RADAR = `[MULIGHET] Kommunale energitilskudd endres til høsten – relevant for boligvedlikeholds-abonnementet (middels sikkerhet).
 [RISIKO] To nye aktører i samme nisje siste kvartal – differensiering må spisses (lav sikkerhet).
 [ENDRING] Formspree har endret gratiskvoten – sjekk skjema-endepunktene på publiserte tester (høy sikkerhet).`;
 
 async function run() {
-  const sync = readJSON(dataPath("factory-data.json"), null);
-  const names = sync ? Object.keys(sync).filter((k) => k.startsWith("cf_project_")).map((k) => sync[k].name + ": " + (sync[k].idea || "")).join("\n") : "(ingen synkede prosjekter)";
+  const sync = syncData();
+  const companiesDoc = readJSON(dataPath("companies.json"), null);
+  const names = [
+    ...(sync ? Object.keys(sync).filter((k) => k.startsWith("cf_project_")).map((k) => sync[k].name + ": " + (sync[k].idea || "")) : []),
+    ...((companiesDoc && companiesDoc.companies) || []).map((c) => c.name + " (selskap): " + (c.domain || "")),
+  ].join("\n") || "(ingen synkede prosjekter eller selskaper)";
   const { text, mock } = await llm({
     agent: "radar",
     system: `Du er SAGAs radar i nattmodus. Finn 2–4 konkrete funn for eierens portefølje. Merk hvert funn [MULIGHET]/[RISIKO]/[ENDRING] + sikkerhetsgrad. Du har IKKE websøk i natt – baser deg på generell kunnskap og si tydelig hva som må verifiseres. Norsk, kompakt.`,
