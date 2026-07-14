@@ -5,6 +5,7 @@
  */
 "use strict";
 const { dataPath, syncData, writeJSON, llm, today } = require("./lib/common");
+const policy = require("./lib/policy");
 
 const MOCK_PROTOCOL = `SELSKAP: BoligPuls (TEST)
 VURDERING: Validering står stille – falsk dør er publisert, men ingen resultater er registrert.
@@ -23,10 +24,19 @@ async function run() {
 
   const projects = Object.keys(sync).filter((k) => k.startsWith("cf_project_")).map((k) => sync[k]);
   const summary = projects.map((p) => `- ${p.name}${p.test ? " (TEST)" : ""}: status ${p.status}, fase ${p.phase}, score ${p.evaluation ? p.evaluation.totalScore + "/100" : "ikke evaluert"}, sist oppdatert ${(p.updatedAt || "").slice(0, 10)}`).join("\n");
+
+  /* Grunnlovsjekk FØR skjønn: harde terskler håndheves i kode, ikke i prompten */
+  const { c, mode: cMode } = policy.load();
+  const check = policy.evaluatePortfolio(policy.betsFromFactoryData(sync), c);
+  out.policy = { constitution: cMode, violations: check.violations, notes: check.notes };
+  const policyText = check.violations.length
+    ? "GRUNNLOVSBRUDD (håndhevet maskinelt – skal adresseres i protokollen):\n" + check.violations.map((v) => `- ${v.text}`).join("\n")
+    : "Ingen grunnlovsbrudd i porteføljen." + (cMode !== "real" ? " (OBS: kjører på eksempel-grunnlov – ekte terskler er ikke lastet.)" : "");
+
   const { text, mock } = await llm({
     agent: "board-meeting",
-    system: `Du er AEIS-styret i nattmodus. Grunnlov: ha rett, ikke vær hyggelig; gjett aldri; merk usikkerhet. Vurder porteføljen nøkternt. For hvert selskap: kort VURDERING, én konkret ANBEFALING, og VARSEL hvis noe krever eieren. Norsk, kompakt.`,
-    user: `PORTEFØLJE (FAKTISK, fra eierens synkede data):\n${summary || "(tom)"}\n\nSkriv nattens styreprotokoll.`,
+    system: `Du er AEIS-styret i nattmodus. Grunnlov: ha rett, ikke vær hyggelig; gjett aldri; merk usikkerhet. Nordstjerne: ${c && c.northStar ? c.northStar.text : "første 1 000 kr/mnd gjentakende"}. Vurder porteføljen nøkternt. For hvert selskap: kort VURDERING, én konkret ANBEFALING, og VARSEL hvis noe krever eieren. Flaggede grunnlovsbrudd SKAL få en anbefaling. Norsk, kompakt.`,
+    user: `PORTEFØLJE (FAKTISK, fra eierens synkede data):\n${summary || "(tom)"}\n\n${policyText}\n\nSkriv nattens styreprotokoll.`,
     mockText: MOCK_PROTOCOL,
   });
   out.mode = mock ? "mock" : "live";

@@ -9,7 +9,7 @@
   },
   "scripts": {
     "saga": "node tools/saga-cli.js",
-    "test": "node tests/separation.test.js && node tests/privacy.test.js && node tests/agents.test.js && node tests/factory.e2e.js && node tests/aeis.e2e.js && node tests/e2e.js && node tests/saga.e2e.js && node tests/os.e2e.js",
-    "test:ci": "node tests/separation.test.js && node tests/privacy.test.js && node tests/agents.test.js"
+    "test": "node tests/separation.test.js && node tests/privacy.test.js && node tests/agents.test.js && node tests/policy.test.js && node tests/factory.e2e.js && node tests/aeis.e2e.js && node tests/e2e.js && node tests/saga.e2e.js && node tests/os.e2e.js",
+    "test:ci": "node tests/separation.test.js && node tests/privacy.test.js && node tests/agents.test.js && node tests/policy.test.js"
   }
 }

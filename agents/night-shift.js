@@ -7,7 +7,8 @@
  *   MOCK_LLM=1 node agents/night-shift.js (deterministisk demo/test)
  */
 "use strict";
-const { dataPath, writeJSON, readJSON, guard, budget, monthSpentNok, today, MOCK } = require("./lib/common");
+const { dataPath, syncData, writeJSON, readJSON, guard, budget, monthSpentNok, today, MOCK } = require("./lib/common");
+const policy = require("./lib/policy");
 
 function stoppedBrief(reason, code) {
   return {
@@ -28,6 +29,18 @@ async function run() {
     guard();
     const board = await require("./board-meeting").run();
     const radar = await require("./radar").run();
+
+    /* Grunnlovsjekk: alltid i briefen, alltid ærlig om hvilken grunnlov som gjaldt.
+     * Status arkiveres maskinlesbart (policy-status.json) så skallet kan vise den. */
+    const { c, mode: cMode } = policy.load();
+    const check = policy.evaluatePortfolio(policy.betsFromFactoryData(syncData()), c);
+    const policyStatus = { schema: 1, date: today(), generatedAt: new Date().toISOString(), constitution: cMode, violations: check.violations, notes: check.notes };
+    writeJSON(dataPath("policy-status.json"), policyStatus);
+    const policyLines = check.violations.length
+      ? check.violations.map((v) => (v.severity === 0 ? "🔴 " : "🟡 ") + v.text)
+      : ["Ingen brudd på tersklene."];
+    if (cMode !== "real") policyLines.push("OBS: kjører på eksempel-grunnlov – legg constitution.json i datarepoet for ekte håndheving.");
+
     const spentBefore = monthSpentNok();
     brief = {
       schema: 1, date: today(), generatedAt: new Date().toISOString(),
@@ -36,6 +49,7 @@ async function run() {
       sections: [
         { title: "Styremøtet", lines: (board.protocol || board.note || "").split("\n").filter(Boolean).slice(0, 8) },
         { title: "Radar", lines: (radar.findings || "").split("\n").filter(Boolean).slice(0, 6) },
+        { title: "Grunnlovsjekk", lines: policyLines.slice(0, 6) },
       ],
       actions: board.projects
         ? [{ title: "Les protokollen og radar-funnene – godkjenn/avvis i appen", why: "Agentene beslutter aldri på dine vegne." }]
