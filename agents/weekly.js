@@ -49,8 +49,18 @@ function run({ logEvent } = {}) {
   const agenda = readJSON(dataPath("agenda.json"), { items: [] });
   const openAgenda = (agenda.items || []).filter((i) => !["gjort", "avvist"].includes(i.status));
 
+  /* Private abonnementer (D2): flagg det som ser ubrukt ut */
+  const subs = readJSON(dataPath("subscriptions.json"), { items: [] });
+  const subLines = (subs.items || []).map((s) => {
+    const staleDays = s.lastUsed ? Math.floor((now - new Date(s.lastUsed)) / DAY) : null;
+    const flag = staleDays === null ? "aldri registrert brukt" : staleDays > 60 ? `${staleDays} dager siden sist brukt` : null;
+    return flag ? `💸 ${s.name} (${s.monthlyNok || "?"} kr/mnd): ${flag} – si opp?` : null;
+  }).filter(Boolean).slice(0, 5);
+  const subTotal = (subs.items || []).reduce((t, s) => t + (s.monthlyNok || 0), 0);
+
   const week = {
     schema: 1, week: isoWeek(now), generatedAt: now.toISOString(),
+    subscriptions: { monthlyNok: subTotal, flags: subLines },
     lastWeek: {
       events: events.length,
       decisions: events.filter((e) => e.type.includes("beslutning") || e.type === "app:eier").length,

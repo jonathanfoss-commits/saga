@@ -60,3 +60,13 @@ stegene og statusinnleseren.
   en betalingsløsning er i drift.
 - Kumulativ kost pr. selskap skrives til `companies.json` og håndheves mot
   grunnlovens eksperimenttak (over_cap-brudd i briefen).
+
+## 5.0-utvidelsen (oppdatert FØR aktivering, 15.07.2026)
+
+| Nytt steg | AI-kall | Kost |
+|---|---|---|
+| Agenda, domenevakt (RDAP), beslutningsjournal, mål-tre, ukesbrief, selvrevisjon, moduser | 0 | 0 kr |
+| Kvartalsmøte (4×/år) | 1 | ~0,2 kr/kvartal |
+| Diktering + lydbrief | 0 (lokalt i nettleseren) | 0 kr |
+| Assistentens sannhetslag-verktøy | del av eksisterende dokk-samtaler (nettleser-nøkkelen, måles i appen) | – |
+| Dagskiftet | kjører på eierens Claude-abonnement (planlagt rutine), ikke API-nøkkelen | 0 kr ekstra |
