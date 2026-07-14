@@ -4,7 +4,7 @@
  * Uten synkede data: ærlig protokoll om at grunnlaget mangler.
  */
 "use strict";
-const { dataPath, readJSON, writeJSON, llm, today } = require("./lib/common");
+const { dataPath, syncData, writeJSON, llm, today } = require("./lib/common");
 
 const MOCK_PROTOCOL = `SELSKAP: BoligPuls (TEST)
 VURDERING: Validering står stille – falsk dør er publisert, men ingen resultater er registrert.
@@ -12,11 +12,11 @@ ANBEFALING: Registrer eksperimentresultat eller sett kill-dato. Ikke bruk mer ka
 VARSEL: Ingen måletall siste 30 dager.`;
 
 async function run() {
-  const sync = readJSON(dataPath("factory-data.json"), null);
+  const sync = syncData();
   const out = { schema: 1, date: today(), generatedAt: new Date().toISOString(), source: sync ? "factory-data.json (FAKTISK, sist synket av eier)" : "ingen", items: [] };
 
   if (!sync) {
-    out.note = "Ingen synkede fabrikkdata i repoet. Kjør «Synk nå (push)» under System i appen, med dette repoet som datarepo – da får styret grunnlag.";
+    out.note = "Ingen synkede fabrikkdata i sannhetslaget. Kjør «Synk nå (push)» under System i appen, mot det PRIVATE datarepoet (saga-data) – da får styret grunnlag. Bruk ALDRI det offentlige kode-repoet som datarepo.";
     writeJSON(dataPath("board", today() + ".json"), out);
     return out;
   }

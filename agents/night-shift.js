@@ -39,7 +39,7 @@ async function run() {
       ],
       actions: board.projects
         ? [{ title: "Les protokollen og radar-funnene – godkjenn/avvis i appen", why: "Agentene beslutter aldri på dine vegne." }]
-        : [{ title: "Kjør «Synk nå (push)» under System", why: "Uten synkede data har nattskiftet ingenting å vurdere." }],
+        : [{ title: "Kjør «Synk nå (push)» under System – mot det PRIVATE datarepoet", why: "Uten synkede data har nattskiftet ingenting å vurdere. Datarepoet skal være privat (saga-data), aldri kode-repoet." }],
       costs: { estimateNok: Math.round((monthSpentNok() - spentBefore) * 10) / 10, monthNok: Math.round(monthSpentNok() * 10) / 10, capNok: budget().monthlyCapNok },
     };
   } catch (e) {

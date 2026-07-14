@@ -3,7 +3,10 @@
  *
  * SIKKERHETSKONTRAKT (skal ikke svekkes):
  * - API-nøkkel leses KUN fra miljøet (ANTHROPIC_API_KEY) – aldri fra filer.
- * - Agentene skriver KUN under data/ (versjonert JSON). Aldri kode, aldri config.
+ * - Agentene skriver KUN under DATA-katalogen (versjonert JSON). Aldri kode, aldri config.
+ * - DATA ligger i det PRIVATE datarepoet (DATA_DIR i CI) – aldri i det offentlige
+ *   kode-repoet. Forretningsdata i offentlig repo er en privacy-brudd (se
+ *   docs/privacy-audit.md); tests/privacy.test.js håndhever dette.
  * - Kill-switch (config/KILL_SWITCH finnes) og månedstak stopper alt.
  * - MOCK_LLM=1 gir deterministiske svar uten nettverk (tester/demo).
  */
@@ -13,6 +16,11 @@ const path = require("path");
 
 const ROOT = path.join(__dirname, "..", "..");
 const DATA = process.env.DATA_DIR || path.join(ROOT, "data");
+/* Sannhetslaget: appens synk-fil ligger i ROTA av det private datarepoet
+ * (Sync.DATA_PATH i core/factory.js), mens agentene skriver under data/.
+ * I CI: DATA_DIR=<saga-data>/data og SYNC_FILE=<saga-data>/factory-data.json.
+ * Lokalt/tester: fallback til DATA/factory-data.json som før. */
+const SYNC_FILE = process.env.SYNC_FILE || path.join(DATA, "factory-data.json");
 
 function readJSON(p, fallback) {
   try { return JSON.parse(fs.readFileSync(p, "utf-8")); } catch { return fallback; }
@@ -83,4 +91,6 @@ async function llm({ agent, system, user, maxTokens = 2500, mockText }) {
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-module.exports = { ROOT, DATA, dataPath, readJSON, writeJSON, budget, costs, monthSpentNok, recordCost, guard, llm, today, MOCK };
+function syncData() { return readJSON(SYNC_FILE, null); }
+
+module.exports = { ROOT, DATA, SYNC_FILE, dataPath, syncData, readJSON, writeJSON, budget, costs, monthSpentNok, recordCost, guard, llm, today, MOCK };

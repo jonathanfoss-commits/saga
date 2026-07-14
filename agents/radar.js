@@ -3,14 +3,14 @@
  * eieren tar dem selv videre til Idélab (ingen auto-intake om natten).
  */
 "use strict";
-const { dataPath, readJSON, writeJSON, llm, today } = require("./lib/common");
+const { dataPath, syncData, writeJSON, llm, today } = require("./lib/common");
 
 const MOCK_RADAR = `[MULIGHET] Kommunale energitilskudd endres til høsten – relevant for boligvedlikeholds-abonnementet (middels sikkerhet).
 [RISIKO] To nye aktører i samme nisje siste kvartal – differensiering må spisses (lav sikkerhet).
 [ENDRING] Formspree har endret gratiskvoten – sjekk skjema-endepunktene på publiserte tester (høy sikkerhet).`;
 
 async function run() {
-  const sync = readJSON(dataPath("factory-data.json"), null);
+  const sync = syncData();
   const names = sync ? Object.keys(sync).filter((k) => k.startsWith("cf_project_")).map((k) => sync[k].name + ": " + (sync[k].idea || "")).join("\n") : "(ingen synkede prosjekter)";
   const { text, mock } = await llm({
     agent: "radar",

@@ -937,6 +937,10 @@ print('OK', len(names))
       const auth = req.headers()["authorization"] || "";
       if (auth.includes("bad-pat")) return route.fulfill({ status: 401, contentType: "application/json", body: JSON.stringify({ message: "Bad credentials" }) });
       const url = new URL(req.url());
+      /* Repo-metadata (privatvakten spør GET /repos/{repo}): saga-data er privat,
+       * demo/public-repo simulerer feilkonfigurasjon mot offentlig repo. */
+      const meta = url.pathname.match(/^\/repos\/([^/]+\/[^/]+)$/);
+      if (meta && req.method() === "GET") return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ full_name: meta[1], private: meta[1] !== "demo/public-repo" }) });
       const m = url.pathname.match(/^\/repos\/([^/]+\/[^/]+)\/contents\/(.+)$/);
       if (!m) return route.fulfill({ status: 404, contentType: "application/json", body: "{}" });
       const key = m[1] + "/" + decodeURIComponent(m[2]);
@@ -1048,6 +1052,20 @@ print('OK', len(names))
     await page.waitForFunction(() => { const t = document.getElementById("syncStatus").textContent; return t.includes("Feil") && t.includes("PAT"); }, null, { timeout: 5000 });
     check("ugyldig PAT gir handlingsrettet feilmelding", true, null);
     await page.fill("#ghPat", "good-pat");
+    await page.click("#ghSaveBtn");
+
+    /* Privatvakten: synk mot OFFENTLIG repo skal nektes hardt (L0/D18) */
+    await page.fill("#syncRepo", "demo/public-repo");
+    await page.click("#ghSaveBtn");
+    await page.click("#syncPushBtn");
+    await page.waitForFunction(() => document.getElementById("syncStatus").textContent.includes("OFFENTLIG"), null, { timeout: 5000 });
+    check("privatvakt: synk mot offentlig repo nektes med instruks", true, null);
+    const pubQueued = await page.evaluate(() => window.CF.OwnerQueue.compute().some((x) => x.id === "syncpublic") === false);
+    check("eier-køen har ikke falsk alarm når datarepo ≠ Pages-repo", pubQueued, null);
+    await page.evaluate(() => { window.CF.Sync.saveConfig({ repo: window.CF.Publish.config().repo }); });
+    const pubQueued2 = await page.evaluate(() => window.CF.OwnerQueue.compute().some((x) => x.id === "syncpublic"));
+    check("eier-køen flagger KRITISK når datarepo = Pages-repo", pubQueued2, null);
+    await page.fill("#syncRepo", "demo/saga-data");
     await page.click("#ghSaveBtn");
 
     /* Publisering (eier-port) → live URL → trakt og live-panel */

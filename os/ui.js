@@ -102,22 +102,34 @@ function renderLive() {
   document.querySelectorAll("#ccLive [data-al-open]").forEach((b) => { b.onclick = () => { goTab("portfolio"); showProject(b.dataset.alOpen); }; });
 }
 
-/* Morgenbrief: nattskiftets siste leveranse (data/brief-latest.json, committet
- * av Actions-agentene). Statisk fil – 404 betyr ærlig «ikke levert enda». */
+/* Morgenbrief: nattskiftets siste leveranse. Sannhetslaget er det PRIVATE
+ * datarepoet (data/brief-latest.json der, skrevet av Actions-agentene) – leses
+ * via PAT når synk er konfigurert. Fallback til lokal fil dekker kun utvikling/
+ * tester; i det offentlige repoet finnes ingen data (privacy-audit). */
 let briefCache = null, briefFetched = false;
 async function renderBrief() {
   const el = $("ccBrief");
   if (!briefFetched) {
     briefFetched = true;
-    try {
-      const r = await fetch("data/brief-latest.json", { cache: "no-store" });
-      if (r.ok) briefCache = await r.json();
-    } catch { /* offline/lokalt uten data – vis tom tilstand */ }
+    const s = window.CF.Sync.status();
+    if (s.configured) {
+      try {
+        const f = await window.CF.Gh.getFile(s.repo, "data/brief-latest.json", window.CF.Sync.config().branch || "main");
+        if (f) briefCache = JSON.parse(f.content);
+      } catch { /* feil PAT/nett – vis tom tilstand, synk-panelet forklarer */ }
+    }
+    if (!briefCache) {
+      try {
+        const r = await fetch("data/brief-latest.json", { cache: "no-store" });
+        if (r.ok) briefCache = await r.json();
+      } catch { /* offline/lokalt uten data – vis tom tilstand */ }
+    }
   }
   const b = briefCache;
   if (!b || !b.headline) {
-    el.innerHTML = `<div class="panel muted">Nattskiftet har ikke levert enda. Agentene kjører når repoet har
-      <b>ANTHROPIC_API_KEY</b> som secret (se DIN TUR under System) – inntil da er alt her manuelt arbeid.</div>`;
+    el.innerHTML = `<div class="panel muted">Nattskiftet har ikke levert enda. Agentene kjører når kode-repoet har
+      <b>ANTHROPIC_API_KEY</b> og <b>DATA_REPO_TOKEN</b> som secrets, og de skriver til det PRIVATE datarepoet
+      (se DIN TUR under System) – inntil da er alt her manuelt arbeid.</div>`;
     return;
   }
   const modeBadge = b.mode === "live" ? "" : ` <span class="badge test">${esc(b.mode === "mock" ? "TEST" : b.mode)}</span>`;
