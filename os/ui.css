@@ -244,8 +244,10 @@ tr:hover td { background: rgba(10,186,181,.025); }
     backdrop-filter: blur(10px);
   }
   #sidebar .logo, #sidebar .foot { display: none; }
-  nav#mainnav { flex-direction: row; width: 100%; justify-content: space-around; }
-  nav#mainnav button { flex-direction: column; gap: 2px; padding: 6px 4px; font-size: 8.5px; letter-spacing: .06em; border: 0; }
+  /* 8 flater: nav ruller horisontalt i stedet for å presse knapper ut av skjermen */
+  nav#mainnav { flex-direction: row; width: 100%; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  nav#mainnav::-webkit-scrollbar { display: none; }
+  nav#mainnav button { flex: 0 0 auto; flex-direction: column; gap: 2px; padding: 6px 8px; font-size: 8.5px; letter-spacing: .06em; border: 0; white-space: nowrap; }
   nav#mainnav button.on { background: none; }
   nav#mainnav button .n { margin-left: 0; position: absolute; transform: translate(14px, -6px); }
   #topbar { grid-column: 1; padding: 10px 14px; }

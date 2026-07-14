@@ -1,13 +1,16 @@
-/* Company Factory – Control Center UI.
- * Rent visningslag: all forretningslogikk bor i factory.js (window.CF).
- * Struktur: hjelpere → ruting/nav → Command Center → Godkjenninger →
+/* SAGA OS – skallet. Evolusjon av fabrikkens Control Center (se docs/os-audit.md).
+ * Rent visningslag: forretningslogikk bor i core/ (window.CF, window.AEIS).
+ * Struktur: hjelpere → ruting/nav → Kommando (m/ morgenbrief) → Godkjenninger →
  * Idélab (+ sammenligning) → Selskaper (portefølje + arbeidsområde) →
  * Bibliotek → System → kommandopalett.
+ * Flate-registry: os/board.js og os/chat.js registrerer seg i window.OS.views.
  */
 (() => {
 "use strict";
 const $ = (id) => document.getElementById(id);
 const { Store, Projects, Pipeline, Board, Demo, SelfReview, Alerts, Activity, Costs, Metrics, Lessons, Library, PHASES, OWNER_GATE_ACTIONS } = window.CF;
+/* Skallets flate-registry – os/board.js og os/chat.js kobler seg på her */
+window.OS = { views: {} };
 
 /* ---------- hjelpere ---------- */
 function esc(s) { const d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
@@ -20,7 +23,7 @@ function nok(n) { return n == null ? "–" : Math.round(n).toLocaleString("nb-NO
 function when(iso) { return (iso || "").slice(5, 16).replace("T", " "); }
 
 /* ---------- ruting og navigasjon ---------- */
-const CRUMBS = { command: "Command Center", idea: "Idélab", portfolio: "Selskaper", approvals: "Godkjenninger", library: "Bibliotek", system: "System" };
+const CRUMBS = { command: "Kommando", idea: "Idélab", portfolio: "Selskaper", board: "Styret", chat: "Assistent", approvals: "Godkjenninger", library: "Bibliotek", system: "System" };
 
 function updateNavBadges() {
   const alerts = Alerts.derive();
@@ -42,6 +45,7 @@ function activateTab(name, crumbExtra) {
   if (name === "approvals") renderApprovals();
   if (name === "library" || name === "system") { renderLessons(); renderLibrary(); }
   if (name === "system") { renderStorage(); renderCosts(); renderEfficiency(); renderOwnerQueueFull(); renderSyncStatus(); }
+  if (window.OS.views[name]) window.OS.views[name]();
   updateNavBadges();
 }
 document.querySelectorAll("#mainnav button").forEach((b) => {
@@ -98,7 +102,34 @@ function renderLive() {
   document.querySelectorAll("#ccLive [data-al-open]").forEach((b) => { b.onclick = () => { goTab("portfolio"); showProject(b.dataset.alOpen); }; });
 }
 
+/* Morgenbrief: nattskiftets siste leveranse (data/brief-latest.json, committet
+ * av Actions-agentene). Statisk fil – 404 betyr ærlig «ikke levert enda». */
+let briefCache = null, briefFetched = false;
+async function renderBrief() {
+  const el = $("ccBrief");
+  if (!briefFetched) {
+    briefFetched = true;
+    try {
+      const r = await fetch("data/brief-latest.json", { cache: "no-store" });
+      if (r.ok) briefCache = await r.json();
+    } catch { /* offline/lokalt uten data – vis tom tilstand */ }
+  }
+  const b = briefCache;
+  if (!b || !b.headline) {
+    el.innerHTML = `<div class="panel muted">Nattskiftet har ikke levert enda. Agentene kjører når repoet har
+      <b>ANTHROPIC_API_KEY</b> som secret (se DIN TUR under System) – inntil da er alt her manuelt arbeid.</div>`;
+    return;
+  }
+  const modeBadge = b.mode === "live" ? "" : ` <span class="badge test">${esc(b.mode === "mock" ? "TEST" : b.mode)}</span>`;
+  el.innerHTML = `<div class="panel"><h3>${esc(b.date || "")} – ${esc(b.headline)}${modeBadge}</h3>` +
+    (b.sections || []).map((s) => `<div class="note"><b>${esc(s.title)}:</b> ${(s.lines || []).map(esc).join(" · ")}</div>`).join("") +
+    ((b.actions || []).length ? `<div class="note" style="margin-top:6px"><b>Foreslåtte handlinger:</b> ${b.actions.map((a) => esc(a.title)).join(" · ")}</div>` : "") +
+    (b.costs ? `<div class="note muted">Nattens AI-kost: ~${esc(String(b.costs.estimateNok ?? "?"))} kr <span class="badge est">estimat</span> · måned: ${esc(String(b.costs.monthNok ?? "?"))} / ${esc(String(b.costs.capNok ?? "?"))} kr tak</div>` : "") +
+    `</div>`;
+}
+
 function renderCommand() {
+  renderBrief();
   renderOwnerQueue();
   renderLive();
   /* Trakten: nuller vises ærlig – det er hele poenget */
@@ -1021,4 +1052,14 @@ document.addEventListener("keydown", (e) => {
 
 /* ---------- oppstart ---------- */
 route();
+/* Flate-API for os/board.js og os/chat.js (lastes etter denne fila og kaller
+ * OS.registerView; er flaten aktiv i dyp-lenken re-rutes det ved registrering) */
+window.OS.goTab = goTab;
+window.OS.showProject = showProject;
+window.OS.esc = esc;
+window.OS.when = when;
+window.OS.registerView = (name, renderFn) => {
+  window.OS.views[name] = renderFn;
+  if (document.querySelector(`#tab-${name}.on`)) renderFn();
+};
 })();

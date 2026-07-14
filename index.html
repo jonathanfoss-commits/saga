@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SAGA</title>
-<meta name="description" content="Company Factory Control Center – grensesnittet som styrer det AI-drevne startup-studioet.">
+<meta name="description" content="SAGA – personlig AI-operativsystem: selskapsfabrikk, digitalt styre og assistent i én app.">
 <link rel="stylesheet" href="shared/design-tokens.css">
 <link rel="icon" type="image/svg+xml" href="shared/logo.svg">
 <link rel="icon" href="icons/icon-192.png">
@@ -20,19 +20,21 @@
 <aside id="sidebar">
   <div class="logo">
     <h1>SAGA</h1>
-    <div class="sub">CONTROL CENTER</div>
+    <div class="sub">OPERATIVSYSTEM</div>
   </div>
   <nav id="mainnav">
-    <button data-tab="command" class="on"><span class="ic">◉</span>COMMAND<span class="n" id="navAlertCount" hidden></span></button>
+    <button data-tab="command" class="on"><span class="ic">◉</span>KOMMANDO<span class="n" id="navAlertCount" hidden></span></button>
     <button data-tab="idea"><span class="ic">◇</span>IDÉLAB</button>
     <button data-tab="portfolio"><span class="ic">▣</span>SELSKAPER</button>
+    <button data-tab="board"><span class="ic">🏛</span>STYRET</button>
+    <button data-tab="chat"><span class="ic">✦</span>ASSISTENT</button>
     <button data-tab="approvals"><span class="ic">✓</span>GODKJENNINGER<span class="n" id="navGateCount" hidden></span></button>
     <button data-tab="library"><span class="ic">⌘</span>BIBLIOTEK</button>
     <button data-tab="system"><span class="ic">⚙</span>SYSTEM</button>
   </nav>
   <div class="foot">
-    <a href="assistant/">← SAGA</a> · <a href="board/">AEIS</a><br>
-    cf_* · isolert per prosjekt
+    <a href="assistant/">📱 Telefon-PWA</a> · <a href="board/">🏛 Styret fullskjerm</a><br>
+    Cmd+J: assistent-dokk · Ctrl+K: palett
   </div>
 </aside>
 
@@ -44,8 +46,10 @@
 
 <main id="view">
 
-<!-- ============ COMMAND CENTER ============ -->
+<!-- ============ KOMMANDO ============ -->
 <section class="tab on" id="tab-command">
+  <h2>MORGENBRIEF – DETTE SKJEDDE MENS DU VAR BORTE</h2>
+  <div id="ccBrief"></div>
   <h2>INNTEKTSTRAKTEN – FABRIKKENS ENESTE ÆRLIGE MÅLESTOKK</h2>
   <div class="tiles" id="ccFunnel"></div>
   <div id="ccOwnerQueue"></div>
@@ -103,6 +107,16 @@
   <h2>PROSJEKTPORTEFØLJE</h2>
   <div id="portfolio"></div>
   <div id="detail"></div>
+</section>
+
+<!-- ============ STYRET ============ -->
+<section class="tab" id="tab-board">
+  <div id="boardView"></div>
+</section>
+
+<!-- ============ ASSISTENT ============ -->
+<section class="tab" id="tab-chat">
+  <div id="chatView"></div>
 </section>
 
 <!-- ============ GODKJENNINGER ============ -->
