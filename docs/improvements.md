@@ -38,3 +38,13 @@ Modulene logger feil/friksjon automatisk til `saga_improvements` i appen
 - Arc reactor-ikonene er fortsatt cyan/mørke (MIGRATION.md pkt. 4). SVG-logo
   finnes; PNG-settet (192/512/apple-touch) må genereres på nytt.
 - Status: åpen
+
+## [effekt: middels] [innsats: middels] Konsolider chat-klientene (assistant-PWA og core/chat.js)
+- To klienter mot samme API: PWA-en (stemme, SW, verktøysett) og dokkens
+  slanke motor (D15). Trekk felles send/tool-use-løkke inn i core/.
+- Status: åpen
+
+## [effekt: middels] [innsats: lav] Radar-funn → Idélab-innboks med ett klikk
+- Nattskiftets radar skriver til data/; i dag må eieren kopiere funn manuelt
+  inn i innboksen. Knapp i morgenbriefen som kaller SAGA.bridge.addIdeaToFactory.
+- Status: åpen

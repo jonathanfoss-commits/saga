@@ -62,3 +62,22 @@ AEIS speiler hovedboks-innslag (beslutninger, radar). Kryssfane-oppdatering via
    mangler (`try { window.SAGA … } catch`).
 3. Kontraktsendringer krever oppdatering av dette dokumentet + smoke-testene
    i `tests/saga.e2e.js`.
+
+## SAGA OS (2.0): én dør + nattskiftet
+
+```
+index.html + os/{ui,board,chat}.js        skallet: 8 flater, palett, dokk (Cmd+J)
+core/{saga-core,factory,aeis,chat}.js     motorer – DOM-fritt unntatt visningslagene
+data/  ← .github/workflows/night-shift.yml (styremøte → radar → morgenbrief)
+```
+
+- Flate-kontrakt: `window.OS.registerView(navn, render)`; skallet eier ruting
+  (`#/board`, `#/chat`, `#/companies/<id>`), palett og navigasjon.
+- Fabrikk ↔ styre: «Send til styret» bygger sak av prosjektstate, kjører
+  AEIS-pipelinen, logger anbefalingen i prosjektets tidslinje og kobler
+  hovedboken til selskapet (`projectId`).
+- Dokk-kontrakt: chat-boksen er ETT element som flyttes mellom dokk og flate;
+  kontekst (aktivt selskap/flate) injiseres i systemprompten ved send.
+- Nattskiftet leser kun synkede `data/`-filer og skriver kun `data/` –
+  se docs/automation.md og docs/economics.md. Morgenbriefen konsumeres av
+  forsiden via `data/brief-latest.json` (schema 1).
