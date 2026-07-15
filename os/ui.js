@@ -175,9 +175,8 @@ async function renderBrief() {
   }
   const b = briefCache;
   if (!b || !b.headline) {
-    el.innerHTML = `<div class="panel muted">Nattskiftet har ikke levert enda. Agentene kjører når kode-repoet har
-      <b>ANTHROPIC_API_KEY</b> og <b>DATA_REPO_TOKEN</b> som secrets, og de skriver til det PRIVATE datarepoet
-      (se DIN TUR under System) – inntil da er alt her manuelt arbeid.</div>`;
+    /* NB: .panel er pre-wrap – strengen må være ÉN linje for ikke å arve kildekodens innrykk */
+    el.innerHTML = `<div class="panel muted">Nattskiftet har ikke levert enda. Agentene kjører når kode-repoet har <b>ANTHROPIC_API_KEY</b> og <b>DATA_REPO_TOKEN</b> som secrets, og de skriver til det PRIVATE datarepoet (se DIN TUR under System) – inntil da er alt her manuelt arbeid.</div>`;
     return;
   }
   const modeBadge = b.mode === "live" ? "" : ` <span class="badge test">${esc(b.mode === "mock" ? "TEST" : b.mode)}</span>`;
@@ -322,9 +321,8 @@ async function renderThink() {
   const t = thinkCache;
   const obsidianLink = `<a href="obsidian://open?vault=Obsidian%20Vault">Åpne vaulten →</a>`;
   if (!t) {
-    el.innerHTML = `<div class="panel muted">Tenkelaget er ikke koblet til.${thinkError ? " " + esc(thinkError) : ""}
-      Vaulten eksporterer <b>_dashboards/saga-export.json</b> hver kveld 21:30 – legg inn vault-repoet
-      under System → Synk &amp; publisering (samme PAT trenger les-tilgang dit). ${obsidianLink}</div>`;
+    /* NB: .panel er pre-wrap – strengen må være ÉN linje for ikke å arve kildekodens innrykk */
+    el.innerHTML = `<div class="panel muted">Tenkelaget er ikke koblet til.${thinkError ? " " + esc(thinkError) : ""} Vaulten eksporterer feeden hver kveld 21:30 – legg inn vault-repoet under System → Synk &amp; publisering (samme PAT trenger les-tilgang dit). ${obsidianLink}</div>`;
     return;
   }
   /* Ferskhet: feeden skrives 21:30 – i går kveld er normalt, eldre betyr at backupen har stoppet */

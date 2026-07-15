@@ -188,7 +188,7 @@ function aeisHandler(route) {
     await page.reload({ waitUntil: "networkidle" });
     await page.waitForFunction(() => /Tenkelaget er ikke koblet til/.test(document.getElementById("ccThink").textContent), null, { timeout: 5000 });
     check("tom-tilstand forklarer oppsettet (vault-repo under System)",
-      await page.evaluate(() => document.getElementById("ccThink").textContent.includes("saga-export.json")), null);
+      await page.evaluate(() => document.getElementById("ccThink").textContent.includes("vault-repoet under System")), null);
 
     /* Med kobling: privatvakt + feed mockes – panelet viser varsler, milepæl og rytme */
     const FEED = {
@@ -279,6 +279,45 @@ function aeisHandler(route) {
     check("PAT-en finnes aldri i eksporten", !rt.patLeak, null);
     check("ingen JS-feil i oppsett-flyten", errors.length === 0, errors);
     await page.close();
+  }
+
+  /* ---------- OS 6: mobil-ergonomi – assistenten og brede tabeller ---------- */
+  console.log("OS 6: mobil ruter assistenten til CHAT-fanen, siden ruller aldri sidelengs, desktop-dokk kan lukkes");
+  {
+    const page = await browser.newPage({ viewport: { width: 375, height: 812 } });
+    const errors = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+    await page.goto(BASE, { waitUntil: "networkidle" });
+    await page.evaluate(() => { localStorage.clear(); window.CF.Demo.load(); });
+    await page.reload({ waitUntil: "networkidle" });
+
+    /* Assistent-knappen: aldri dokk-overlegg på touch (ingen Esc, ✕ under statuslinjen) */
+    await page.click("#dockBtn");
+    const mob = await page.evaluate(() => ({
+      dockOn: document.getElementById("dock").classList.contains("on"),
+      onChat: !!document.querySelector("#tab-chat.on"),
+    }));
+    check("mobil: assistent-knappen åpner CHAT-fanen, ikke dokken", !mob.dockOn && mob.onChat, mob);
+
+    /* Brede tabeller: panelet ruller, siden gjør det aldri */
+    for (const tab of ["command", "portfolio", "system"]) {
+      await page.evaluate((t) => window.OS.goTab(t), tab);
+      await page.waitForTimeout(300);
+      const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      check(`mobil: ingen horisontal overflow på ${tab}`, over <= 2, over + "px");
+    }
+    check("mobil: ingen JS-feil", errors.length === 0, errors);
+    await page.close();
+
+    /* Desktop: dokken åpner og ✕ lukker den (regresjon: «klarte ikke lukke vinduet») */
+    const desk = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    await desk.goto(BASE, { waitUntil: "networkidle" });
+    await desk.click("#dockBtn");
+    const opened = await desk.evaluate(() => document.getElementById("dock").classList.contains("on"));
+    await desk.click("#dockClose");
+    const closed = await desk.evaluate(() => !document.getElementById("dock").classList.contains("on"));
+    check("desktop: dokken åpner med knappen og lukkes med ✕", opened && closed, { opened, closed });
+    await desk.close();
   }
 
   await browser.close();

@@ -96,7 +96,9 @@ nav#mainnav button .n {
 #cmdkBtn:hover { color: var(--cyan); border-color: var(--cyan-dim); }
 #cmdkBtn kbd { color: var(--faint); }
 
-main#view { grid-column: 2; padding: 20px 22px 80px; max-width: 1160px; width: 100%; margin: 0 auto; }
+/* min-width: 0 – grid-items har min-width:auto, så brede tabeller ville ellers
+ * strekke hele kolonnen forbi viewporten (siden ruller sidelengs på mobil) */
+main#view { grid-column: 2; padding: 20px 22px 80px; max-width: 1160px; width: 100%; margin: 0 auto; min-width: 0; }
 .tab { display: none; animation: fadein .18s ease; }
 .tab.on { display: block; }
 @keyframes fadein { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
@@ -271,6 +273,9 @@ tr:hover td { background: rgba(10,186,181,.025); }
   .alert { flex-wrap: wrap; }
   .alert .actions { margin-left: 0; width: 100%; }
   .alert .actions button { flex: 1; padding: 10px; font-size: 12px; }
+  /* Brede tabeller (prioritering, portefølje, scorekort) ruller inni panelet –
+   * SIDEN skal aldri rulle sidelengs */
+  table { display: block; overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
 }
 
 /* ===== Assistent: dokk (Cmd+J) og chat-boks ===== */
@@ -308,7 +313,13 @@ tr:hover td { background: rgba(10,186,181,.025); }
 #chatForm { display: flex; gap: 8px; }
 #chatForm input { flex: 1; }
 #chatForm button { flex: 0 0 auto; padding: 8px 14px; }
-@media (max-width: 760px) { #dock { width: 100vw; padding-bottom: env(safe-area-inset-bottom, 0px); } }
+/* Mobil: dokken åpnes normalt aldri (knappen ruter til CHAT-fanen), men får den
+ * liv likevel skal ✕ ALDRI ligge under statuslinjen – og trykkflater er ≥44px */
+@media (max-width: 760px) {
+  #dock { width: 100vw; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  #dockHead { padding-top: calc(10px + env(safe-area-inset-top, 0px)); }
+  #dockHead button.small { min-width: 44px; min-height: 44px; font-size: 16px; }
+}
 
 /* ===== 5.1 Premium-puss ===== */
 
