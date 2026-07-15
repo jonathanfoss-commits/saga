@@ -134,6 +134,10 @@ const readData = (dataDir, f) => JSON.parse(fs.readFileSync(path.join(dataDir, f
   check("kvartalssyntese arkiveres med innstillinger", qf.length === 1 && readData(dataDir, "quarterly/" + qf[0]).synthesis.includes("INNSTILLING"), qf);
   const events = fs.readFileSync(path.join(dataDir, "events-" + new Date().getFullYear() + ".jsonl"), "utf-8");
   check("hendelsesloggen har natt-start og skill-hendelser", events.includes("natt:start") && events.includes("skill:ok"), null);
+  const brief = readData(dataDir, "brief-latest.json");
+  const allLines = (brief.sections || []).flatMap((s) => s.lines || []);
+  check("briefen er ren tekst: ingen markdown-tokens i noen linje",
+    allLines.every((l) => !l.startsWith("#") && !l.includes("**")), allLines.filter((l) => l.startsWith("#") || l.includes("**")));
 }
 
 /* ---------- 8: moduser ---------- */
