@@ -23,7 +23,7 @@ function nok(n) { return n == null ? "–" : Math.round(n).toLocaleString("nb-NO
 function when(iso) { return (iso || "").slice(5, 16).replace("T", " "); }
 
 /* ---------- ruting og navigasjon ---------- */
-const CRUMBS = { command: "Kommando", idea: "Idélab", portfolio: "Selskaper", board: "Styret", chat: "Assistent", approvals: "Godkjenninger", library: "Bibliotek", system: "System" };
+const CRUMBS = { command: "Kommando", idea: "Idélab", portfolio: "Selskaper", board: "Styret", chat: "Assistent", approvals: "Godkjenninger", library: "Bibliotek", system: "System", more: "Mer" };
 
 function updateNavBadges() {
   const alerts = Alerts.derive();
@@ -31,6 +31,15 @@ function updateNavBadges() {
   const nA = $("navAlertCount"), nG = $("navGateCount");
   nA.hidden = alerts.length === 0; nA.textContent = alerts.length;
   nG.hidden = gates === 0; nG.textContent = gates;
+  /* Agenda-frister (i dag/forfalt) på HJEM – synlig fra alle flater */
+  const today = new Date().toISOString().slice(0, 10);
+  let _ag = null; try { _ag = agendaCache; } catch { /* før deklarasjon */ }
+  const due = ((_ag && _ag.items) || []).filter((i) => !["gjort", "avvist"].includes(i.status) && i.due && i.due <= today).length;
+  const nD = $("navDueCount");
+  if (nD) { nD.hidden = due === 0; nD.textContent = due; }
+  /* MER speiler godkjenninger på mobil */
+  const nM = $("navMoreCount");
+  if (nM) { nM.hidden = gates === 0; nM.textContent = gates; }
 }
 
 function activateTab(name, crumbExtra) {
@@ -62,6 +71,44 @@ function route() {
   activateTab(CRUMBS[tab] ? tab : "command");
 }
 window.addEventListener("hashchange", route);
+
+/* MER-flaten (mobil): link-kort til flater som ikke fikk plass i nav-en */
+if ($("moreApprovals")) $("moreApprovals").onclick = () => goTab("approvals");
+if ($("moreLibrary")) $("moreLibrary").onclick = () => goTab("library");
+
+/* Trekk-ned-for-å-hente (mobil): fra toppen av siden → synk fra sannhetslaget */
+(() => {
+  let startY = null, pulling = false;
+  const ind = document.createElement("div");
+  ind.id = "pullHint";
+  ind.textContent = "⇣ slipp for å hente";
+  document.body.appendChild(ind);
+  window.addEventListener("touchstart", (e) => {
+    if (window.scrollY <= 0 && window.CF.AutoSync.enabled()) { startY = e.touches[0].clientY; pulling = false; }
+  }, { passive: true });
+  window.addEventListener("touchmove", (e) => {
+    if (startY === null) return;
+    const d = e.touches[0].clientY - startY;
+    pulling = d > 70;
+    ind.classList.toggle("show", pulling);
+  }, { passive: true });
+  window.addEventListener("touchend", async () => {
+    const go = pulling; startY = null; pulling = false;
+    ind.classList.remove("show");
+    if (!go) return;
+    ind.textContent = "synker …"; ind.classList.add("show");
+    try {
+      await window.CF.AutoSync.onWake();
+      briefCache = null; briefFetched = false;
+      agendaCache = null; agendaFetched = false;
+      companiesCache = null; companiesFetched = false;
+      thinkCache = null; thinkFetched = false; thinkError = "";
+      renderCommand();
+    } finally {
+      setTimeout(() => { ind.classList.remove("show"); ind.textContent = "⇣ slipp for å hente"; }, 700);
+    }
+  }, { passive: true });
+})();
 
 /* ---------- COMMAND CENTER ---------- */
 function alertHtml(a) {
@@ -250,13 +297,72 @@ async function renderAgenda() {
       renderAgenda();
     } catch (e) { alert("Feil: " + e.message); }
   };
+  updateNavBadges();
   el.querySelectorAll("[data-ag-done]").forEach((b) => { b.onclick = () => close(b.dataset.agDone, "gjort"); });
   el.querySelectorAll("[data-ag-dismiss]").forEach((b) => { b.onclick = () => close(b.dataset.agDismiss, "avvist"); });
+}
+
+/* Tenkelaget: vaultens kveldsfeed (beslutninger, Etterpå, relasjoner, møter,
+ * rytme) – les-only fra vault-repoet via Think (kontrakt: vaultens
+ * «50 Ressurser/SAGA-integrasjon.md»). Ingen lokal fallback, i motsetning til
+ * brief/agenda: feeden inneholder personnavn og skal aldri finnes som fil i
+ * kode-repoet. */
+let thinkCache = null, thinkFetched = false, thinkError = "";
+async function renderThink() {
+  const el = $("ccThink");
+  if (!el) return;
+  if (!thinkFetched) {
+    thinkFetched = true;
+    el.innerHTML = `<div class="skel" aria-hidden="true"><div class="bar"></div><div class="bar w60"></div><div class="bar w35"></div></div>`;
+    if (window.CF.Think.ready()) {
+      try { thinkCache = await window.CF.Think.fetch(); }
+      catch (e) { thinkError = e.message; }
+    }
+  }
+  const t = thinkCache;
+  const obsidianLink = `<a href="obsidian://open?vault=Obsidian%20Vault">Åpne vaulten →</a>`;
+  if (!t) {
+    el.innerHTML = `<div class="panel muted">Tenkelaget er ikke koblet til.${thinkError ? " " + esc(thinkError) : ""}
+      Vaulten eksporterer <b>_dashboards/saga-export.json</b> hver kveld 21:30 – legg inn vault-repoet
+      under System → Synk &amp; publisering (samme PAT trenger les-tilgang dit). ${obsidianLink}</div>`;
+    return;
+  }
+  /* Ferskhet: feeden skrives 21:30 – i går kveld er normalt, eldre betyr at backupen har stoppet */
+  const daysOld = t.generert ? Math.floor((Date.now() - new Date(t.generert)) / 86400000) : null;
+  const stale = daysOld !== null && daysOld > 1;
+  const passert = (t.beslutninger && t.beslutninger.revurdering_passert) || [];
+  const aktive = (t.beslutninger && t.beslutninger.aktive) || [];
+  const forsomte = (t.relasjoner && t.relasjoner.forsomte_over_30d) || [];
+  const mp = t.etterpaa && t.etterpaa.neste_milepael;
+  const mpDays = mp && mp.frist ? Math.ceil((new Date(mp.frist) - Date.now()) / 86400000) : null;
+  el.innerHTML =
+    (passert.length ? `<div class="alert sev0"><div>
+      <div class="p">🔴 ${passert.length === 1 ? "1 beslutning har" : passert.length + " beslutninger har"} passert revurderingsdato</div>
+      <div class="d">${passert.map((b) => esc(b.tittel) + (b.revurderes ? ` (skulle revurderes ${esc(b.revurderes)})` : "")).join(" · ")}</div>
+    </div><div class="actions"><button class="small" data-think-obsidian>Revurder i vaulten →</button></div></div>` : "") +
+    (mp ? `<div class="alert ${mpDays !== null && mpDays <= 14 ? "sev1" : "sev2"}"><div>
+      <div class="p">Etterpå – neste milepæl</div>
+      <div class="t">${esc(mp.beskrivelse || "")}${mp.frist ? ` · frist ${esc(mp.frist)}${mpDays !== null ? ` (${mpDays} dager)` : ""}` : ""}</div>
+      <div class="d">${t.etterpaa.aapne_oppgaver != null ? esc(String(t.etterpaa.aapne_oppgaver)) + " åpne oppgaver i vaulten" : ""}</div>
+    </div></div>` : "") +
+    (forsomte.length ? `<div class="alert sev1"><div>
+      <div class="p">Forsømte relasjoner (over 30 dager)</div>
+      <div class="d">${forsomte.map((r) => `${esc(r.navn)}${r.selskap ? " (" + esc(r.selskap) + ")" : ""} – ${esc(String(r.dager_siden))} dager siden`).join(" · ")}</div>
+    </div></div>` : "") +
+    `<div class="tiles">
+      <div class="tile"><div class="k">AKTIVE BESLUTNINGER</div><div class="v${passert.length ? "" : " accent"}">${aktive.length}</div><div class="d">${passert.length ? passert.length + " venter på revurdering" : "ingen passert revurdering"}</div></div>
+      <div class="tile"><div class="k">ÅPNE AKSJONSPUNKTER</div><div class="v">${esc(String((t.moter && t.moter.aapne_aksjonspunkter) ?? "–"))}</div><div class="d">løfter på tvers av møter</div></div>
+      <div class="tile"><div class="k">INBOX VENTER</div><div class="v">${esc(String(t.inbox_venter ?? "–"))}</div><div class="d">uprosesserte notater</div></div>
+      <div class="tile"><div class="k">UKESREVIEW</div><div class="v">${esc(t.ukesreview_siste || "–")}</div><div class="d">siste gjennomførte</div></div>
+    </div>
+    <div class="note ${stale ? "" : "muted"}">${stale ? `⚠️ Feeden er ${daysOld} dager gammel (generert ${esc(t.generert)}) – sjekk kveldsbackupen (21:30).` : `Generert ${esc(t.generert || "?")} av vaultens kveldsbackup.`} ${obsidianLink}</div>`;
+  el.querySelectorAll("[data-think-obsidian]").forEach((b) => { b.onclick = () => { location.href = "obsidian://open?vault=Obsidian%20Vault"; }; });
 }
 
 function renderCommand() {
   renderBrief();
   renderAgenda();
+  renderThink();
   renderCompanies();
   renderOwnerQueue();
   renderLive();
@@ -413,6 +519,7 @@ function renderSyncStatus(msg) {
   $("ghPat").value = window.CF.Gh.pat;
   $("syncRepo").value = window.CF.Sync.config().repo;
   $("pubRepo").value = pub.repo;
+  $("thinkRepo").value = window.CF.Think.config().repo;
   $("syncStatus").textContent = msg || (s.configured
     ? `Koblet til ${s.repo}. Sist synket: ${s.lastSyncAt ? when(s.lastSyncAt) : "aldri"}.`
     : "Ikke konfigurert – se DIN TUR over for klikk-for-klikk-oppsett.");
@@ -422,6 +529,7 @@ $("ghSaveBtn").onclick = () => {
   window.CF.Gh.pat = pat;
   window.CF.Sync.saveConfig({ repo: $("syncRepo").value.trim() });
   window.CF.Publish.saveConfig({ repo: $("pubRepo").value.trim() });
+  window.CF.Think.saveConfig({ repo: $("thinkRepo").value.trim() });
   /* Fang kopieringsfeil ved lagring i stedet for ved første synk (401) */
   const patLooksOk = !pat || /^(github_pat_|ghp_)/.test(pat);
   renderSyncStatus(patLooksOk

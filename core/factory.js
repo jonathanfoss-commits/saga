@@ -2279,6 +2279,27 @@ const Truth = {
   },
 };
 
+/* ================= Think (tenkelaget): les-only feed fra Obsidian-vaulten =================
+ * Vaulten eksponerer _dashboards/saga-export.json i sitt eget PRIVATE repo –
+ * kontrakten bor i vaultens «50 Ressurser/SAGA-integrasjon.md» og feltene der
+ * er avtalen: endres de, oppdateres .saga-export.py og dette panelet samtidig.
+ * SAGA leser, skriver aldri. Feeden inneholder personnavn → privatvakten
+ * gjelder også her, og repoet konfigureres under System (aldri hardkodet i
+ * det offentlige kode-repoet). */
+const Think = {
+  PATH: "_dashboards/saga-export.json",
+  config() { return Store.get("cf_think", { repo: "", branch: "main" }); },
+  saveConfig(patch) { const c = { ...this.config(), ...patch }; Store.set("cf_think", c); return c; },
+  ready() { return !!(this.config().repo && Gh.pat); },
+  async fetch() {
+    const c = this.config();
+    if (!this.ready()) throw new Error("Vault-repo ikke konfigurert (System → Synk & publisering).");
+    await Sync.assertPrivate(c.repo);
+    const f = await Gh.getFile(c.repo, this.PATH, c.branch);
+    return f ? JSON.parse(f.content) : null;
+  },
+};
+
 /* ================= AutoSync (5.0 B3): mobil = desktop uten tenking =================
  * Regler: lokale endringer → push (debounced). Ved oppstart/fokus: rene lokale
  * data → pull; skitne → push. «Hent/Synk nå» består som manuell overstyring. */
@@ -2493,4 +2514,4 @@ const SelfReview = {
 };
 
 /* Eksponer modulene (også for tester) */
-window.CF = { Store, LLM, Truth, AutoSync, Board, Pipeline, Projects, Intake, Evaluation, Experiments, Landing, BizModel, Finance, Benchmarks, SiteGen, TechArch, AppGen, Maturity, Metrics, Library, Marketing, Strategy, Legal, Ops, Report, Retro, Lessons, Activity, Costs, Alerts, Funnel, Ranking, Gh, Sync, Publish, Inbox, Integrity, OwnerQueue, Planner, Brief, Demo, SelfReview, SCHEMAS, PHASES, OWNER_GATE_ACTIONS, FACTORY_ROLES, CRITERIA, MATURITY_CHECKLISTS, COST_RATES, pool, makeZip, crc32 };
+window.CF = { Store, LLM, Truth, Think, AutoSync, Board, Pipeline, Projects, Intake, Evaluation, Experiments, Landing, BizModel, Finance, Benchmarks, SiteGen, TechArch, AppGen, Maturity, Metrics, Library, Marketing, Strategy, Legal, Ops, Report, Retro, Lessons, Activity, Costs, Alerts, Funnel, Ranking, Gh, Sync, Publish, Inbox, Integrity, OwnerQueue, Planner, Brief, Demo, SelfReview, SCHEMAS, PHASES, OWNER_GATE_ACTIONS, FACTORY_ROLES, CRITERIA, MATURITY_CHECKLISTS, COST_RATES, pool, makeZip, crc32 };

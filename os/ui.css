@@ -119,12 +119,12 @@ h2 { font-size: var(--fs-s); letter-spacing: .25em; color: var(--cyan-dim); marg
 html { -webkit-text-size-adjust: 100%; }
 * { -webkit-tap-highlight-color: transparent; }
 
-textarea, input[type=text], input[type=password] {
+textarea, select, input:not([type]), input[type=text], input[type=password], input[type=search] {
   width: 100%; background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
   border-radius: var(--r-s); padding: 11px 12px; font: inherit; font-size: 14px; outline: none;
   transition: border-color .15s;
 }
-textarea:focus, input:focus { border-color: var(--cyan-dim); }
+textarea:focus, input:focus, select:focus { border-color: var(--cyan-dim); }
 select {
   width: 100%; background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
   border-radius: var(--r-s); padding: 10px 12px; font: inherit; font-size: 13px; outline: none;
@@ -253,7 +253,10 @@ tr:hover td { background: rgba(10,186,181,.025); }
   #sidebar .logo, #sidebar .foot { display: none; }
   /* 8 flater: nav ruller horisontalt i stedet for å presse knapper ut av skjermen */
   nav#mainnav { flex-direction: row; width: 100%; justify-content: space-between; overflow-x: hidden; }
-  nav#mainnav button { flex: 1 1 0; min-width: 0; flex-direction: column; gap: 3px; padding: 8px 2px; font-size: 8px; letter-spacing: .02em; border: 0; white-space: nowrap; }
+  nav#mainnav button { flex: 1 1 0; min-width: 0; flex-direction: column; gap: 4px; padding: 9px 2px 7px; font-size: 8.5px; letter-spacing: .02em; border: 0; white-space: nowrap; }
+  /* Ikonet er treffpunktet: stort og tydelig (HIG ~25 pt), teksten er støtte */
+  nav#mainnav button .ic { width: auto; font-size: 21px; line-height: 1; }
+  nav#mainnav button.on .ic { color: var(--cyan); text-shadow: 0 0 10px rgba(var(--saga-glow), .5); }
   nav#mainnav button .lbl { display: none; }
   nav#mainnav button .lbl-s { display: block; }
   nav#mainnav button.on { background: none; }
@@ -264,7 +267,7 @@ tr:hover td { background: rgba(10,186,181,.025); }
   #topbar { grid-column: 1; padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 10px; }
   main#view { grid-column: 1; padding: 12px 14px calc(96px + env(safe-area-inset-bottom, 0px)); }
   /* iOS auto-zoomer inn på felt under 16px – aldri på mobil */
-  textarea, input[type=text], input[type=password], select { font-size: 16px; }
+  textarea, select, input:not([type]), input[type=text], input[type=password], input[type=search] { font-size: 16px; }
   .alert { flex-wrap: wrap; }
   .alert .actions { margin-left: 0; width: 100%; }
   .alert .actions button { flex: 1; padding: 10px; font-size: 12px; }
@@ -356,3 +359,21 @@ button:active { transform: scale(.97); }
   button { transition: none; }
   button:active { transform: none; }
 }
+
+/* MER-fane finnes kun på mobil; Godkjenninger/Bibliotek flyttes dit */
+.mobile-only { display: none; }
+@media (max-width: 760px) {
+  nav#mainnav button[data-tab=approvals], nav#mainnav button[data-tab=library] { display: none; }
+  .mobile-only { display: flex; }
+}
+/* Agenda-badge: frister er alltid røde */
+#mainnav .n.due { background: var(--red); color: #1B0605; }
+
+/* Trekk-ned-indikator */
+#pullHint {
+  position: fixed; top: calc(8px + env(safe-area-inset-top, 0px)); left: 50%; transform: translate(-50%, -30px);
+  background: var(--panel-2); border: 1px solid var(--line); color: var(--cyan);
+  font-size: 11px; letter-spacing: .08em; padding: 6px 14px; border-radius: 20px;
+  opacity: 0; transition: opacity .15s, transform .15s; z-index: 60; pointer-events: none;
+}
+#pullHint.show { opacity: 1; transform: translate(-50%, 0); }

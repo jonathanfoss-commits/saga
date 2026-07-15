@@ -912,12 +912,28 @@ print('OK', len(names))
     await mob.reload({ waitUntil: "networkidle" });
     await mob.click('nav button[data-tab="system"]');
     await mob.click("#demoBtn");
-    await mob.click('nav button[data-tab="approvals"]');
+    /* På mobil bor Godkjenninger bak MER-fanen (5.1) */
+    await mob.click('nav button[data-tab="more"]');
+    await mob.click("#moreApprovals");
     await mob.waitForSelector("#approvalsList [data-al-approve]", { timeout: 5000 });
     const navFixed = await mob.evaluate(() => getComputedStyle(document.getElementById("sidebar")).position);
     await mob.click("#approvalsList [data-al-approve]");
     const mobOk = await mob.evaluate(() => Object.values(window.CF.Projects.list()[0].gates).length === 1 && document.getElementById("approvalsList").textContent.includes("Ingen ventende"));
     check("mobil: bunn-navigasjon (fixed) og godkjenning ende-til-ende", navFixed === "fixed" && mobOk, { navFixed, mobOk });
+    /* iOS auto-zoomer på felt < 16px – gjelder OGSÅ input uten type (chat/palett) */
+    const inputSizes = await mob.evaluate(() => {
+      /* probe = <input> UTEN type – regelen skal dekke også de (chat/palett) */
+      const probe = document.createElement("input");
+      document.getElementById("view").appendChild(probe);
+      const out = {
+        untypedProbe: getComputedStyle(probe).fontSize,
+        idea: getComputedStyle(document.getElementById("ideaName")).fontSize,
+        ghPat: getComputedStyle(document.getElementById("ghPat")).fontSize,
+      };
+      probe.remove();
+      return out;
+    });
+    check("mobil: alle tekstfelt ≥16px (ingen iOS fokus-zoom)", Object.values(inputSizes).every((v) => parseFloat(v) >= 16), inputSizes);
     check("ingen JS-feil på mobil", mobErrors.length === 0, mobErrors);
     await mob.close();
   }
