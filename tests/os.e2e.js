@@ -175,6 +175,55 @@ function aeisHandler(route) {
     await page.close();
   }
 
+  /* ---------- OS 4: Tenkelaget – vault-feeden i cockpiten (mocket GitHub) ---------- */
+  console.log("OS 4: Tenkelaget – tom-tilstand uten kobling, full render fra mocket vault-feed");
+  {
+    const page = await browser.newPage({ viewport: { width: 1200, height: 900 } });
+    const errors = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+
+    /* Uten kobling: ærlig tom-tilstand med oppsett-instruksjon og Obsidian-lenke */
+    await page.goto(BASE, { waitUntil: "networkidle" });
+    await page.evaluate(() => localStorage.clear());
+    await page.reload({ waitUntil: "networkidle" });
+    await page.waitForFunction(() => /Tenkelaget er ikke koblet til/.test(document.getElementById("ccThink").textContent), null, { timeout: 5000 });
+    check("tom-tilstand forklarer oppsettet (vault-repo under System)",
+      await page.evaluate(() => document.getElementById("ccThink").textContent.includes("saga-export.json")), null);
+
+    /* Med kobling: privatvakt + feed mockes – panelet viser varsler, milepæl og rytme */
+    const FEED = {
+      generert: new Date().toISOString().slice(0, 10),
+      beslutninger: {
+        aktive: [{ tittel: "B1", revurderes: "2099-01-01", revurdering_passert: false }, { tittel: "2026-06-20 Testbeslutning", revurderes: "2026-07-10", revurdering_passert: true }],
+        revurdering_passert: [{ tittel: "2026-06-20 Testbeslutning", revurderes: "2026-07-10", revurdering_passert: true }],
+      },
+      etterpaa: { neste_milepael: { beskrivelse: "Fase 2B verifisert", frist: "2099-08-15" }, aapne_oppgaver: 9 },
+      relasjoner: { forsomte_over_30d: [{ navn: "Testperson Testesen", selskap: "Testfirma", dager_siden: 48 }] },
+      moter: { aapne_aksjonspunkter: 5 },
+      ukesreview_siste: "2026-W28",
+      inbox_venter: 3,
+    };
+    await page.route("**/api.github.com/repos/o/vault", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ private: true }) }));
+    await page.route("**/api.github.com/repos/o/vault/contents/**", (route) => route.fulfill({
+      status: 200, contentType: "application/json",
+      body: JSON.stringify({ sha: "abc", content: Buffer.from(JSON.stringify(FEED), "utf8").toString("base64") }),
+    }));
+    await page.evaluate(() => {
+      localStorage.setItem("cf_secret_pat", "github_pat_test");
+      localStorage.setItem("cf_think", JSON.stringify({ repo: "o/vault", branch: "main" }));
+    });
+    await page.reload({ waitUntil: "networkidle" });
+    await page.waitForFunction(() => /revurderingsdato/.test(document.getElementById("ccThink").textContent), null, { timeout: 5000 });
+    const think = await page.evaluate(() => document.getElementById("ccThink").innerHTML);
+    check("rødt varsel når revurdering er passert", think.includes("sev0") && think.includes("1 beslutning har passert revurderingsdato"), think.slice(0, 200));
+    check("Etterpå-milepælen vises med frist og åpne oppgaver", think.includes("Fase 2B verifisert") && think.includes("9 åpne oppgaver"), null);
+    check("forsømte relasjoner vises med navn og dager", think.includes("Testperson Testesen (Testfirma) – 48 dager siden"), null);
+    check("rytme-tiles: aksjonspunkter, inbox, ukesreview, aktive beslutninger", think.includes(">5<") && think.includes(">3<") && think.includes("2026-W28") && think.includes(">2<"), null);
+    check("ferskhet og Obsidian-lenke vises", think.includes("Generert " + FEED.generert) && think.includes("obsidian://open?vault=Obsidian%20Vault"), null);
+    check("ingen JS-feil i Tenkelaget", errors.length === 0, errors);
+    await page.close();
+  }
+
   await browser.close();
   console.log(failures === 0 ? "\nALL OS TESTS PASSED" : `\n${failures} FAILURES`);
   process.exit(failures === 0 ? 0 : 1);
