@@ -320,6 +320,39 @@ function aeisHandler(route) {
     await desk.close();
   }
 
+  /* ---------- OS 7: stemme i assistenten + ledergruppe-modus i personaen ---------- */
+  console.log("OS 7: 🎙 i chat-skjemaet (grasiøs degradering) – ledergruppen i systemprompten");
+  {
+    const page = await browser.newPage({ viewport: { width: 1200, height: 900 } });
+    const bodies = [];
+    await page.route("**/v1/messages", (route) => {
+      bodies.push(JSON.parse(route.request().postData()));
+      route.fulfill(respond("CFO: tallene først. CEO: fortsett."));
+    });
+    await page.goto(BASE, { waitUntil: "networkidle" });
+    await page.evaluate(() => { localStorage.clear(); localStorage.setItem("saga_api_key", "sk-test"); });
+    await page.reload({ waitUntil: "networkidle" });
+    await page.click('nav button[data-tab="chat"]');
+
+    const mic = await page.evaluate(() => {
+      const b = document.getElementById("chatMic");
+      const sr = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+      return { exists: !!b, type: b && b.type, disabledMatchesSupport: b ? b.disabled === !sr : false };
+    });
+    check("🎙-knappen finnes i chat-skjemaet (type=button, aldri submit)", mic.exists && mic.type === "button", mic);
+    check("uten talegjenkjenning i nettleseren er knappen ærlig deaktivert", mic.disabledMatchesSupport, mic);
+
+    await page.fill("#chatInput", "ledergruppe: bør vi prioritere navnebytte?");
+    await page.keyboard.press("Enter");
+    await page.waitForFunction(() => document.getElementById("chatLog").textContent.includes("CFO: tallene først"), null, { timeout: 10000 });
+    const sys = sysOf(bodies[0]);
+    check("systemprompten inneholder ledergruppe-modusen (CFO/CTO/CMO/COO + CEO-syntese)",
+      sys.includes("LEDERGRUPPEN") && ["CFO", "CTO", "CMO", "COO", "CEO"].every((r) => sys.includes(r)), sys.slice(0, 120));
+    check("ledergruppen er sparring – styret og journalføring nevnes som eskalering",
+      sys.includes("STYRET") && sys.includes("journalføre"), null);
+    await page.close();
+  }
+
   await browser.close();
   console.log(failures === 0 ? "\nALL OS TESTS PASSED" : `\n${failures} FAILURES`);
   process.exit(failures === 0 ? 0 : 1);
