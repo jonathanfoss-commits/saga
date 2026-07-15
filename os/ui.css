@@ -114,6 +114,11 @@ h2 { font-size: var(--fs-s); letter-spacing: .25em; color: var(--cyan-dim); marg
 .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .row > * { flex: 1; min-width: 150px; }
 
+/* iOS: -webkit-text-size-adjust hindrer vilkårlig tekstoppskalering i landskap;
+ * tap-highlight fjernes (egne fokus-stiler finnes) */
+html { -webkit-text-size-adjust: 100%; }
+* { -webkit-tap-highlight-color: transparent; }
+
 textarea, input[type=text], input[type=password] {
   width: 100%; background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
   border-radius: var(--r-s); padding: 11px 12px; font: inherit; font-size: 14px; outline: none;
@@ -239,7 +244,8 @@ tr:hover td { background: rgba(10,186,181,.025); }
   #app { grid-template-columns: 1fr; }
   #sidebar {
     position: fixed; inset: auto 0 0 0; height: auto; z-index: 20;
-    flex-direction: row; align-items: center; padding: 6px 8px;
+    flex-direction: row; align-items: center;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
     border-right: 0; border-top: 1px solid var(--line);
     background: color-mix(in srgb, var(--bg) 92%, transparent);
     backdrop-filter: blur(10px);
@@ -255,8 +261,10 @@ tr:hover td { background: rgba(10,186,181,.025); }
   /* Tastatursnarveier og palett gir ikke mening uten tastatur */
   #cmdkBtn { display: none; }
   #topbar kbd { display: none; }
-  #topbar { grid-column: 1; padding: 10px 14px; }
-  main#view { grid-column: 1; padding: 12px 14px 96px; }
+  #topbar { grid-column: 1; padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 10px; }
+  main#view { grid-column: 1; padding: 12px 14px calc(96px + env(safe-area-inset-bottom, 0px)); }
+  /* iOS auto-zoomer inn på felt under 16px – aldri på mobil */
+  textarea, input[type=text], input[type=password], select { font-size: 16px; }
   .alert { flex-wrap: wrap; }
   .alert .actions { margin-left: 0; width: 100%; }
   .alert .actions button { flex: 1; padding: 10px; font-size: 12px; }
@@ -297,4 +305,4 @@ tr:hover td { background: rgba(10,186,181,.025); }
 #chatForm { display: flex; gap: 8px; }
 #chatForm input { flex: 1; }
 #chatForm button { flex: 0 0 auto; padding: 8px 14px; }
-@media (max-width: 760px) { #dock { width: 100vw; } }
+@media (max-width: 760px) { #dock { width: 100vw; padding-bottom: env(safe-area-inset-bottom, 0px); } }
