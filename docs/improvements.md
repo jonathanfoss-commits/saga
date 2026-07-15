@@ -55,3 +55,17 @@ Modulene logger feil/friksjon automatisk til `saga_improvements` i appen
   Utkast til utadrettet innhold (byrå-e-post, LinkedIn-poster fra LAUNCH.md)
   legges som filer i sannhetslaget, aldri sendt.
 - Status: åpen (blokkert av eier-handling: remote + token)
+
+## [effekt: høy] [innsats: middels] Ekte push-varsler til iPhone (Declarative Web Push)
+- Safari 18.4+ støtter Declarative Web Push for hjemskjerm-PWA-er. Nattskiftet
+  kan sende morgenbrief/frist-varsler direkte til telefonen (web-push m/VAPID-
+  nøkler som secrets; abonnement lagres i sannhetslaget). Erstatter/supplerer
+  GitHub Issue-kanalen. Be om varsel-tillatelse først etter en meningsfull
+  handling, aldri ved første besøk.
+- Status: åpen
+
+## [effekt: middels] [innsats: høy] iOS-widget (WidgetKit) via ios/-skallet
+- Xcode er nå installert. ios/Jarvis-skallet kan moderniseres (heter fortsatt
+  Jarvis) og få en hjemskjerm-widget: klokkeringen + dagens frister. Krever
+  native utvikling + App Store-løype eller sideloading.
+- Status: åpen

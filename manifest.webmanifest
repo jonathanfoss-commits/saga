@@ -17,5 +17,22 @@
       "sizes": "512x512",
       "type": "image/png"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Agenda",
+      "url": "./#/command",
+      "description": "Dagens frister og påminnelser"
+    },
+    {
+      "name": "Ny idé",
+      "url": "./#/idea",
+      "description": "Registrer en idé i fabrikken"
+    },
+    {
+      "name": "Assistent",
+      "url": "./#/chat",
+      "description": "Snakk med stabssjefen"
+    }
   ]
 }

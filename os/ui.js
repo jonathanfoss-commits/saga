@@ -23,7 +23,7 @@ function nok(n) { return n == null ? "–" : Math.round(n).toLocaleString("nb-NO
 function when(iso) { return (iso || "").slice(5, 16).replace("T", " "); }
 
 /* ---------- ruting og navigasjon ---------- */
-const CRUMBS = { command: "Kommando", idea: "Idélab", portfolio: "Selskaper", board: "Styret", chat: "Assistent", approvals: "Godkjenninger", library: "Bibliotek", system: "System" };
+const CRUMBS = { command: "Kommando", idea: "Idélab", portfolio: "Selskaper", board: "Styret", chat: "Assistent", approvals: "Godkjenninger", library: "Bibliotek", system: "System", more: "Mer" };
 
 function updateNavBadges() {
   const alerts = Alerts.derive();
@@ -31,6 +31,15 @@ function updateNavBadges() {
   const nA = $("navAlertCount"), nG = $("navGateCount");
   nA.hidden = alerts.length === 0; nA.textContent = alerts.length;
   nG.hidden = gates === 0; nG.textContent = gates;
+  /* Agenda-frister (i dag/forfalt) på HJEM – synlig fra alle flater */
+  const today = new Date().toISOString().slice(0, 10);
+  let _ag = null; try { _ag = agendaCache; } catch { /* før deklarasjon */ }
+  const due = ((_ag && _ag.items) || []).filter((i) => !["gjort", "avvist"].includes(i.status) && i.due && i.due <= today).length;
+  const nD = $("navDueCount");
+  if (nD) { nD.hidden = due === 0; nD.textContent = due; }
+  /* MER speiler godkjenninger på mobil */
+  const nM = $("navMoreCount");
+  if (nM) { nM.hidden = gates === 0; nM.textContent = gates; }
 }
 
 function activateTab(name, crumbExtra) {
@@ -62,6 +71,43 @@ function route() {
   activateTab(CRUMBS[tab] ? tab : "command");
 }
 window.addEventListener("hashchange", route);
+
+/* MER-flaten (mobil): link-kort til flater som ikke fikk plass i nav-en */
+if ($("moreApprovals")) $("moreApprovals").onclick = () => goTab("approvals");
+if ($("moreLibrary")) $("moreLibrary").onclick = () => goTab("library");
+
+/* Trekk-ned-for-å-hente (mobil): fra toppen av siden → synk fra sannhetslaget */
+(() => {
+  let startY = null, pulling = false;
+  const ind = document.createElement("div");
+  ind.id = "pullHint";
+  ind.textContent = "⇣ slipp for å hente";
+  document.body.appendChild(ind);
+  window.addEventListener("touchstart", (e) => {
+    if (window.scrollY <= 0 && window.CF.AutoSync.enabled()) { startY = e.touches[0].clientY; pulling = false; }
+  }, { passive: true });
+  window.addEventListener("touchmove", (e) => {
+    if (startY === null) return;
+    const d = e.touches[0].clientY - startY;
+    pulling = d > 70;
+    ind.classList.toggle("show", pulling);
+  }, { passive: true });
+  window.addEventListener("touchend", async () => {
+    const go = pulling; startY = null; pulling = false;
+    ind.classList.remove("show");
+    if (!go) return;
+    ind.textContent = "synker …"; ind.classList.add("show");
+    try {
+      await window.CF.AutoSync.onWake();
+      briefCache = null; briefFetched = false;
+      agendaCache = null; agendaFetched = false;
+      companiesCache = null; companiesFetched = false;
+      renderCommand();
+    } finally {
+      setTimeout(() => { ind.classList.remove("show"); ind.textContent = "⇣ slipp for å hente"; }, 700);
+    }
+  }, { passive: true });
+})();
 
 /* ---------- COMMAND CENTER ---------- */
 function alertHtml(a) {
@@ -250,6 +296,7 @@ async function renderAgenda() {
       renderAgenda();
     } catch (e) { alert("Feil: " + e.message); }
   };
+  updateNavBadges();
   el.querySelectorAll("[data-ag-done]").forEach((b) => { b.onclick = () => close(b.dataset.agDone, "gjort"); });
   el.querySelectorAll("[data-ag-dismiss]").forEach((b) => { b.onclick = () => close(b.dataset.agDismiss, "avvist"); });
 }

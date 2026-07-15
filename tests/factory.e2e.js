@@ -912,7 +912,9 @@ print('OK', len(names))
     await mob.reload({ waitUntil: "networkidle" });
     await mob.click('nav button[data-tab="system"]');
     await mob.click("#demoBtn");
-    await mob.click('nav button[data-tab="approvals"]');
+    /* På mobil bor Godkjenninger bak MER-fanen (5.1) */
+    await mob.click('nav button[data-tab="more"]');
+    await mob.click("#moreApprovals");
     await mob.waitForSelector("#approvalsList [data-al-approve]", { timeout: 5000 });
     const navFixed = await mob.evaluate(() => getComputedStyle(document.getElementById("sidebar")).position);
     await mob.click("#approvalsList [data-al-approve]");

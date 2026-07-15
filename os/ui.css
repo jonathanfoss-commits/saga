@@ -359,3 +359,21 @@ button:active { transform: scale(.97); }
   button { transition: none; }
   button:active { transform: none; }
 }
+
+/* MER-fane finnes kun på mobil; Godkjenninger/Bibliotek flyttes dit */
+.mobile-only { display: none; }
+@media (max-width: 760px) {
+  nav#mainnav button[data-tab=approvals], nav#mainnav button[data-tab=library] { display: none; }
+  .mobile-only { display: flex; }
+}
+/* Agenda-badge: frister er alltid røde */
+#mainnav .n.due { background: var(--red); color: #1B0605; }
+
+/* Trekk-ned-indikator */
+#pullHint {
+  position: fixed; top: calc(8px + env(safe-area-inset-top, 0px)); left: 50%; transform: translate(-50%, -30px);
+  background: var(--panel-2); border: 1px solid var(--line); color: var(--cyan);
+  font-size: 11px; letter-spacing: .08em; padding: 6px 14px; border-radius: 20px;
+  opacity: 0; transition: opacity .15s, transform .15s; z-index: 60; pointer-events: none;
+}
+#pullHint.show { opacity: 1; transform: translate(-50%, 0); }
