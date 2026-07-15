@@ -73,6 +73,9 @@ const Store = {
       cf_index: this.projectIds(), ...projects,
       cf_lessons: this.get("cf_lessons", []), cf_library: this.get("cf_library", []),
       cf_activity: this.get("cf_activity", []), cf_costs: this.get("cf_costs", []),
+      /* Repo-oppsettet følger synken (ALDRI PAT-en): en ny enhet trenger bare
+       * PAT + datarepo – resten av oppsettet kommer med første pull. */
+      cf_config: { syncRepo: Sync.config().repo, pubRepo: Publish.config().repo, thinkRepo: Think.config().repo },
       exported: new Date().toISOString(),
     }, null, 2);
   },
@@ -81,6 +84,13 @@ const Store = {
     if (Array.isArray(d.cf_index)) this.set("cf_index", d.cf_index);
     for (const k of Object.keys(d)) if (k.startsWith("cf_project_")) this.set(k, d[k]);
     for (const k of ["cf_lessons", "cf_library", "cf_activity", "cf_costs"]) if (Array.isArray(d[k])) this.set(k, d[k]);
+    /* Tomme verdier overskriver aldri lokalt oppsett – eldre eksporter mangler cf_config helt */
+    const cfg = d.cf_config;
+    if (cfg && typeof cfg === "object") {
+      if (typeof cfg.syncRepo === "string" && cfg.syncRepo) Sync.saveConfig({ repo: cfg.syncRepo });
+      if (typeof cfg.pubRepo === "string" && cfg.pubRepo) Publish.saveConfig({ repo: cfg.pubRepo });
+      if (typeof cfg.thinkRepo === "string" && cfg.thinkRepo) Think.saveConfig({ repo: cfg.thinkRepo });
+    }
   },
 };
 

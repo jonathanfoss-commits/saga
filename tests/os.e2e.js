@@ -224,6 +224,63 @@ function aeisHandler(route) {
     await page.close();
   }
 
+  /* ---------- OS 5: oppsett-lenken og repo-oppsett som følger synken ---------- */
+  console.log("OS 5: #oppsett-lenke fyller repo-feltene (med bekreftelse) – cf_config følger eksport/import");
+  {
+    const page = await browser.newPage({ viewport: { width: 1200, height: 900 } });
+    const errors = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+    const dialogs = [];
+    page.on("dialog", (d) => { dialogs.push(d.message()); d.accept(); });
+
+    const cfg = { syncRepo: "o/data", pubRepo: "o/pages", thinkRepo: "o/vault" };
+    const link = "#oppsett=" + Buffer.from(JSON.stringify(cfg), "utf8").toString("base64");
+    await page.goto(BASE, { waitUntil: "networkidle" });
+    await page.evaluate(() => localStorage.clear());
+    await page.goto(BASE + link, { waitUntil: "networkidle" });
+    await page.reload({ waitUntil: "networkidle" });
+
+    const state = await page.evaluate(() => ({
+      sync: window.CF.Sync.config().repo, pub: window.CF.Publish.config().repo, think: window.CF.Think.config().repo,
+      onSystem: !!document.querySelector("#tab-system.on"),
+      pat: localStorage.getItem("cf_secret_pat"),
+      fieldVals: [document.getElementById("syncRepo").value, document.getElementById("pubRepo").value, document.getElementById("thinkRepo").value],
+    }));
+    check("bekreftelsesdialogen viser alle tre repoene før noe lagres",
+      dialogs.length === 1 && ["o/data", "o/pages", "o/vault"].every((r) => dialogs[0].includes(r)), dialogs);
+    check("lenken lagrer repo-oppsettet og lander på System", state.sync === "o/data" && state.pub === "o/pages" && state.think === "o/vault" && state.onSystem, state);
+    check("PAT-en settes ALDRI av en lenke", state.pat === null, state.pat);
+    check("feltene på System viser det lagrede oppsettet", state.fieldVals.join(",") === "o/data,o/pages,o/vault", state.fieldVals);
+
+    /* Avvist dialog = ingenting lagres */
+    await page.evaluate(() => { localStorage.clear(); });
+    const page2 = await browser.newPage({ viewport: { width: 1200, height: 900 } });
+    page2.on("dialog", (d) => d.dismiss());
+    await page2.goto(BASE + link, { waitUntil: "networkidle" });
+    check("avvist bekreftelse lagrer ingenting",
+      await page2.evaluate(() => !JSON.parse(localStorage.getItem("cf_sync") || "{}").repo && !JSON.parse(localStorage.getItem("cf_think") || "{}").repo), null);
+    await page2.close();
+
+    /* cf_config følger eksport/import (synk-formatet) – tomme verdier overskriver aldri */
+    const rt = await page.evaluate(() => {
+      localStorage.setItem("cf_secret_pat", "github_pat_TESTLEAK");
+      window.CF.Sync.saveConfig({ repo: "o/data" }); window.CF.Publish.saveConfig({ repo: "o/pages" }); window.CF.Think.saveConfig({ repo: "o/vault" });
+      const dump = window.CF.Store.exportAll();
+      window.CF.Sync.saveConfig({ repo: "" }); window.CF.Publish.saveConfig({ repo: "" }); window.CF.Think.saveConfig({ repo: "" });
+      window.CF.Store.importAll(dump);
+      const restored = [window.CF.Sync.config().repo, window.CF.Publish.config().repo, window.CF.Think.config().repo];
+      window.CF.Store.importAll(JSON.stringify({ cf_config: { syncRepo: "", pubRepo: "", thinkRepo: "" } }));
+      const afterEmpty = [window.CF.Sync.config().repo, window.CF.Publish.config().repo, window.CF.Think.config().repo];
+      const patLeak = window.CF.Store.exportAll().includes("github_pat");
+      return { restored, afterEmpty, patLeak };
+    });
+    check("repo-oppsettet overlever eksport → import (ny enhet får det via pull)", rt.restored.join(",") === "o/data,o/pages,o/vault", rt);
+    check("tomme cf_config-verdier overskriver aldri lokalt oppsett", rt.afterEmpty.join(",") === "o/data,o/pages,o/vault", rt);
+    check("PAT-en finnes aldri i eksporten", !rt.patLeak, null);
+    check("ingen JS-feil i oppsett-flyten", errors.length === 0, errors);
+    await page.close();
+  }
+
   await browser.close();
   console.log(failures === 0 ? "\nALL OS TESTS PASSED" : `\n${failures} FAILURES`);
   process.exit(failures === 0 ? 0 : 1);
