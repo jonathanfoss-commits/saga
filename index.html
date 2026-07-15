@@ -50,6 +50,8 @@
 <section class="tab on" id="tab-command">
   <h2>MORGENBRIEF – DETTE SKJEDDE MENS DU VAR BORTE</h2>
   <div id="ccBrief"></div>
+  <h2>AGENDA – LIVET, IKKE BARE PORTEFØLJEN</h2>
+  <div id="ccAgenda"></div>
   <h2>SELSKAPENE – 90-DAGERSKLOKKEN GÅR</h2>
   <div id="ccCompanies"></div>
   <h2>INNTEKTSTRAKTEN – FABRIKKENS ENESTE ÆRLIGE MÅLESTOKK</h2>
@@ -86,7 +88,10 @@
   <div class="note">Input kan være svært kort. Fabrikken strukturerer idéen, registrerer antakelser, innkaller relevante fagroller, scorer kritisk og anbefaler neste steg. Den forsøker å avkrefte idéen før den anbefaler bygging.</div>
   <input type="text" id="ideaName" placeholder="Arbeidsnavn (f.eks. «BoligPuls»)" style="margin-top:10px">
   <textarea id="ideaText" rows="4" placeholder="Idéen – f.eks. «Lag en abonnementstjeneste som hjelper boligeiere med vedlikehold av bolig.»" style="margin-top:8px"></textarea>
-  <button class="primary" id="runIdeaBtn">🏭 Kjør fabrikken</button>
+  <div class="row" style="margin-top:8px">
+    <button class="primary" id="runIdeaBtn">🏭 Kjør fabrikken</button>
+    <button class="small" id="dictateBtn" title="Dikter idéen (norsk talegjenkjenning i nettleseren – ingenting forlater maskinen)">🎙 Dikter</button>
+  </div>
   <div id="pipeline"></div>
   <div id="board"></div>
   <div id="ideaResult"></div>
@@ -159,8 +164,18 @@
   <div class="row" style="margin-top:8px">
     <button class="small" id="syncPushBtn">⇡ Synk nå (push)</button>
     <button class="small" id="syncPullBtn">⇣ Hent fra repo (pull)</button>
+    <label class="note" style="display:flex;align-items:center;gap:6px;margin:0"><input type="checkbox" id="autoSyncChk"> Auto-synk (mobil = desktop)</label>
   </div>
   <div class="note" id="syncStatus"></div>
+
+  <h2>MODUS</h2>
+  <div class="note">Styrer hvor mye morgenbriefen bråker. Fokus/ferie krever sluttdato – du glemmes aldri i stillhet.</div>
+  <div class="row" style="margin-top:8px">
+    <button class="small" id="modeNormalBtn">🟢 Normal</button>
+    <button class="small" id="modeFokusBtn">🎯 Fokus …</button>
+    <button class="small" id="modeFerieBtn">🏖 Ferie …</button>
+    <span class="note" id="modeStatus" style="margin:0"></span>
+  </div>
 
   <h2>SELVTEST</h2>
   <div class="note">Dataintegritet: indeks mot nøkler, korrupte prosjekter, foreldreløse nøkler. Reparasjon mister aldri data.</div>

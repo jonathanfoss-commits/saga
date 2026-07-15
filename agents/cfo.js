@@ -55,11 +55,17 @@ function run() {
   const net = totalCostNok - revenueNok;
   const runwayMonths = capital !== null && net > 0 ? Math.floor(capital / net) : null;
 
+  const northStar = (constitution && constitution.northStar && constitution.northStar.monthlyRecurringNok) || null;
   const status = {
     schema: 1, month, generatedAt: now.toISOString(), constitution: mode,
     totals: { costNok: totalCostNok, revenueNok, netNok: Math.round(net * 100) / 100, label: "ESTIMAT", note: "Inntekt 0 er FAKTISK (ingen betalingsløsning i drift); kostnader blander FAKTISK og ESTIMAT – se linjene." },
     frame: { maxNok: frameMax, usedPct: frameMax ? Math.round((totalCostNok / frameMax) * 100) : null },
     runwayMonths,
+    goalGap: northStar !== null
+      ? (revenueNok >= northStar
+        ? `🌟 Nordstjernen er nådd: ${revenueNok} kr/mnd gjentakende (mål: ${northStar}).`
+        : `Gap til nordstjernen: ${northStar - revenueNok} kr/mnd gjentakende mangler (har ${revenueNok} av ${northStar}).`)
+      : null,
     perCompany,
   };
   writeJSON(dataPath("pnl-status.json"), status);

@@ -29,7 +29,7 @@ fs.writeFileSync(path.join(tmp, "constitution.json"), JSON.stringify({
     monthlyInvestmentNok: { min: 5000, max: 15000, ref: "f" },
     oneOffCapitalNok: { value: 50000, ref: "f" },
   },
-  mandate: { free: [], ownerGate: [] },
+  mandate: { free: ["analyse", "research", "planlegging", "rapportering", "forslag"], ownerGate: [] },
 }));
 fs.writeFileSync(path.join(dataDir, "pnl.json"), JSON.stringify({
   schema: 1,

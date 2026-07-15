@@ -73,7 +73,7 @@ const company = (over) => ({
     schema: 1, source: { sha256: "fixture" },
     northStar: { text: "Første 1 000 kr/mnd." },
     thresholds: { validationWindowDays: { value: 90, ref: "fixture" }, maxActiveBets: { value: 2, ref: "fixture" }, perExperimentCapNok: { value: 15000, ref: "fixture" } },
-    mandate: { free: [], ownerGate: [] },
+    mandate: { free: ["analyse", "research", "planlegging", "rapportering", "forslag"], ownerGate: [] },
   }));
   agent("night-shift.js", dataDir, {});
   const status = JSON.parse(fs.readFileSync(path.join(dataDir, "policy-status.json"), "utf-8"));

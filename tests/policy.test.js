@@ -30,7 +30,7 @@ const constitution = {
     maxActiveBets: { value: 2, ref: "fixture" },
     perExperimentCapNok: { value: 15000, ref: "fixture" },
   },
-  mandate: { free: ["analyse"], ownerGate: ["pengebruk"] },
+  mandate: { free: ["analyse", "research", "planlegging", "rapportering", "forslag"], ownerGate: ["pengebruk"] },
 };
 /* Ikke på standardstien (søsken til data/) – test 3 krever at den IKKE finnes der */
 fs.mkdirSync(path.join(tmp, "fixture"));

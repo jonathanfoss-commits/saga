@@ -77,3 +77,20 @@ git push --force --mirror https://github.com/jonathanfoss-commits/saga.git
 
 Konsekvenser å være klar over: alle commit-SHA-er endres, åpne PR-er mot gamle
 SHA-er brekker, og lokale kloner (denne maskinen inkludert) må klones på nytt.
+
+## 5.0-tillegget: personlig OS-datatyper (alle PRIVATE, i saga-data)
+
+| Datatype | Fil | Hva lagres | Hva lagres ALDRI |
+|---|---|---|---|
+| Livsadmin-agenda | `data/agenda.json` | Tittel, frist, avsendernavn, kategori, status | E-postinnhold, jobbrelatert (jobbfilter fail-closed: `agents/lib/agenda-filter.js`, testet begge retninger) |
+| Jobbfilter-konfig | `data/agenda-filter-config.json` | Arbeidsgiverens domener/ord som BLOKKLISTE | – (finnes kun for å holde jobben UTE; ligger aldri i offentlig repo) |
+| Beslutningsjournal | `data/decisions-journal.json` | Beslutning, forventning, etterprøvingsdato, dom | – |
+| Minnelaget | `memory/` | Destillerte preferanser/lærdommer eieren selv kan redigere | Helsedata (finnes ikke i systemet), jobbinnhold |
+| Relasjons-CRM | `data/people.json` | Navn, relasjon, bursdag, kontakt-kadens | Kunder/kolleger (eksplisitt utenfor), kontaktinfo utover navn |
+| Utkast | `drafts/` | Utkast til utadrettet innhold – ALDRI sendt av systemet | – |
+| Hendelseslogg | `data/events-YYYY.jsonl` | Systemhendelser m/tidsstempel | – |
+| Mål/modus/lesekø/abonnementer | `data/{goals,mode,reading,subscriptions}.json` | Eierens egne innslag | – |
+| Eierkontekst | `owner-context.json` | Destillerte, OVERFØRBARE mønstre fra eierprofilen | Arbeidsgiverspesifikt (kolleger, kunder, steder) – destillatet er renset |
+
+Nye nettleser-funksjoner uten datalagring utenfor maskinen: diktering
+(Web Speech, lokalt) og lydbrief (speechSynthesis, lokalt).

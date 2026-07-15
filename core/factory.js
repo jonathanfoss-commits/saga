@@ -14,6 +14,12 @@ const Store = {
     if (!key.startsWith("cf_")) throw new Error("Store skriver kun til cf_*-navnerommet: " + key);
     try {
       localStorage.setItem(key, JSON.stringify(value));
+      /* Auto-synk (5.0 B3): merk lokale endringer; synk-laget skyver dem til
+       * sannhetslaget når det passer. Konfig-nøklene trigges ikke. */
+      if (key !== "cf_sync" && key !== "cf_publish") {
+        localStorage.setItem("saga_dirty", "1");
+        if (typeof window !== "undefined" && window.CF && window.CF.AutoSync) window.CF.AutoSync.poke();
+      }
     } catch (e) {
       /* localStorage-kvoten (~5 MB) er en kjent plattformbegrensning – gi et handlingsrettet råd i stedet for en kryptisk feil */
       if (e && (e.name === "QuotaExceededError" || e.code === 22)) {
@@ -2246,6 +2252,61 @@ const Sync = {
   },
 };
 
+/* ================= Truth (5.0): les/skriv enkeltfiler i sannhetslaget =================
+ * Assistentverktøyene og flatene endrer agenda/journal/mål/modus direkte i det
+ * private datarepoet – read-modify-write med sha og ett konfliktforsøk.
+ * ALT går gjennom privatvakten. Kun drift-kategorier (mandatmatrisen): ingen
+ * verktøy her kan sende noe eller bruke penger. */
+const Truth = {
+  async read(path) {
+    const c = Sync.config();
+    if (!c.repo || !Gh.pat) throw new Error("Sannhetslaget er ikke koblet til (PAT + datarepo under System → Synk).");
+    const f = await Gh.getFile(c.repo, path, c.branch);
+    return f ? { json: JSON.parse(f.content), sha: f.sha } : { json: null, sha: undefined };
+  },
+  async update(path, mutate, message) {
+    const c = Sync.config();
+    if (!c.repo || !Gh.pat) throw new Error("Sannhetslaget er ikke koblet til (PAT + datarepo under System → Synk).");
+    await Sync.assertPrivate(c.repo);
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const { json, sha } = await this.read(path);
+      const next = mutate(json);
+      const r = await Gh.putFile(c.repo, path, c.branch, JSON.stringify(next, null, 2) + "\n", message, sha);
+      if (r.status !== 409 && r.status !== 422) { Activity.log("sannhetslag", message + " (" + path + ")"); return next; }
+      /* konflikt: les på nytt og prøv én gang til */
+    }
+    throw new Error("Skrivekonflikt i sannhetslaget (" + path + ") – prøv igjen.");
+  },
+};
+
+/* ================= AutoSync (5.0 B3): mobil = desktop uten tenking =================
+ * Regler: lokale endringer → push (debounced). Ved oppstart/fokus: rene lokale
+ * data → pull; skitne → push. «Hent/Synk nå» består som manuell overstyring. */
+const AutoSync = {
+  timer: null,
+  enabled() { return !!(Sync.config().repo && Gh.pat && Store.get("cf_autosync", true)); },
+  dirty() { return localStorage.getItem("saga_dirty") === "1"; },
+  markClean() { localStorage.removeItem("saga_dirty"); },
+  poke() {
+    if (!this.enabled()) return;
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => this.pushSilent(), 20000);
+  },
+  async pushSilent() {
+    if (!this.enabled() || !this.dirty()) return;
+    try { await Sync.push(); this.markClean(); this.notify("Synket ↑"); }
+    catch (e) { this.notify("Auto-synk feilet: " + e.message); }
+  },
+  async onWake() {
+    if (!this.enabled()) return;
+    try {
+      if (this.dirty()) { await Sync.push(); this.markClean(); this.notify("Synket ↑ (lokale endringer)"); }
+      else { await Sync.pull(); this.notify("Synket ↓"); }
+    } catch (e) { this.notify("Auto-synk feilet: " + e.message); }
+  },
+  notify(msg) { if (typeof window !== "undefined" && window.OS && window.OS.syncBadge) window.OS.syncBadge(msg); },
+};
+
 /* ================= Publish (ship-path: falsk dør → live URL, bak eier-port) ================= */
 const Publish = {
   config() { return Store.get("cf_publish", { repo: "", branch: "main", baseUrl: "" }); },
@@ -2432,4 +2493,4 @@ const SelfReview = {
 };
 
 /* Eksponer modulene (også for tester) */
-window.CF = { Store, LLM, Board, Pipeline, Projects, Intake, Evaluation, Experiments, Landing, BizModel, Finance, Benchmarks, SiteGen, TechArch, AppGen, Maturity, Metrics, Library, Marketing, Strategy, Legal, Ops, Report, Retro, Lessons, Activity, Costs, Alerts, Funnel, Ranking, Gh, Sync, Publish, Inbox, Integrity, OwnerQueue, Planner, Brief, Demo, SelfReview, SCHEMAS, PHASES, OWNER_GATE_ACTIONS, FACTORY_ROLES, CRITERIA, MATURITY_CHECKLISTS, COST_RATES, pool, makeZip, crc32 };
+window.CF = { Store, LLM, Truth, AutoSync, Board, Pipeline, Projects, Intake, Evaluation, Experiments, Landing, BizModel, Finance, Benchmarks, SiteGen, TechArch, AppGen, Maturity, Metrics, Library, Marketing, Strategy, Legal, Ops, Report, Retro, Lessons, Activity, Costs, Alerts, Funnel, Ranking, Gh, Sync, Publish, Inbox, Integrity, OwnerQueue, Planner, Brief, Demo, SelfReview, SCHEMAS, PHASES, OWNER_GATE_ACTIONS, FACTORY_ROLES, CRITERIA, MATURITY_CHECKLISTS, COST_RATES, pool, makeZip, crc32 };
