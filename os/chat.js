@@ -16,8 +16,43 @@ box.innerHTML = `
   <div class="note" id="chatStatus"></div>
   <form id="chatForm">
     <input id="chatInput" placeholder="Spør – eller be om handling («legg idé i innboksen», «hva mener styret?»)" autocomplete="off">
+    <button class="small" type="button" id="chatMic" title="Snakk til assistenten (norsk) – sendes når du slipper">🎙</button>
     <button class="primary" type="submit" id="chatSend">↑</button>
   </form>`;
+
+/* ---------- stemme (Jarvis-flyten): trykk 🎙, snakk, pause → sendes ----------
+ * Samme lokale talegjenkjenning som Idélabs Dikter-knapp (nb-NO, ingenting
+ * forlater maskinen før teksten sendes som vanlig melding). continuous=false:
+ * én ytring per trykk – naturlig pause avslutter og auto-sender. */
+(() => {
+  const btn = box.querySelector("#chatMic");
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { btn.disabled = true; btn.title = "Nettleseren støtter ikke talegjenkjenning."; return; }
+  let rec = null;
+  btn.onclick = () => {
+    if (rec) { rec.stop(); return; }
+    rec = new SR();
+    rec.lang = "nb-NO";
+    rec.continuous = false;
+    rec.interimResults = false;
+    btn.textContent = "⏹";
+    btn.classList.add("primary");
+    rec.onresult = (ev) => {
+      const t = Array.from(ev.results).slice(ev.resultIndex).map((r) => r[0].transcript).join(" ").trim();
+      const input = box.querySelector("#chatInput");
+      input.value = (input.value ? input.value + " " : "") + t;
+    };
+    rec.onend = () => {
+      btn.textContent = "🎙";
+      btn.classList.remove("primary");
+      rec = null;
+      /* auto-send: det dikterte skal ETT trykk unna svar – null tasting */
+      if (box.querySelector("#chatInput").value.trim()) box.querySelector("#chatForm").requestSubmit();
+    };
+    rec.onerror = () => { btn.textContent = "🎙"; btn.classList.remove("primary"); rec = null; };
+    rec.start();
+  };
+})();
 
 function renderLog() {
   const log = box.querySelector("#chatLog");
