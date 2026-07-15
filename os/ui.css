@@ -253,7 +253,10 @@ tr:hover td { background: rgba(10,186,181,.025); }
   #sidebar .logo, #sidebar .foot { display: none; }
   /* 8 flater: nav ruller horisontalt i stedet for å presse knapper ut av skjermen */
   nav#mainnav { flex-direction: row; width: 100%; justify-content: space-between; overflow-x: hidden; }
-  nav#mainnav button { flex: 1 1 0; min-width: 0; flex-direction: column; gap: 3px; padding: 8px 2px; font-size: 8px; letter-spacing: .02em; border: 0; white-space: nowrap; }
+  nav#mainnav button { flex: 1 1 0; min-width: 0; flex-direction: column; gap: 4px; padding: 9px 2px 7px; font-size: 8.5px; letter-spacing: .02em; border: 0; white-space: nowrap; }
+  /* Ikonet er treffpunktet: stort og tydelig (HIG ~25 pt), teksten er støtte */
+  nav#mainnav button .ic { width: auto; font-size: 21px; line-height: 1; }
+  nav#mainnav button.on .ic { color: var(--cyan); text-shadow: 0 0 10px rgba(var(--saga-glow), .5); }
   nav#mainnav button .lbl { display: none; }
   nav#mainnav button .lbl-s { display: block; }
   nav#mainnav button.on { background: none; }
