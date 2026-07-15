@@ -306,3 +306,53 @@ tr:hover td { background: rgba(10,186,181,.025); }
 #chatForm input { flex: 1; }
 #chatForm button { flex: 0 0 auto; padding: 8px 14px; }
 @media (max-width: 760px) { #dock { width: 100vw; padding-bottom: env(safe-area-inset-bottom, 0px); } }
+
+/* ===== 5.1 Premium-puss ===== */
+
+/* Signatur: klokkeringen – 90-dagersvinduet tegnet som gjenstående bue.
+ * Fargen bærer semantikk (ok → advarsel → kritisk), ikke pynt. */
+.clockring {
+  --pct: 100; --ring: var(--cyan);
+  width: 64px; height: 64px; border-radius: 50%; flex: 0 0 64px;
+  background:
+    radial-gradient(closest-side, var(--panel) 74%, transparent 75% 100%),
+    conic-gradient(var(--ring) calc(var(--pct) * 1%), var(--panel-2) 0);
+  display: flex; align-items: center; justify-content: center;
+  font-variant-numeric: tabular-nums;
+}
+.clockring b { font-size: 17px; color: var(--text); line-height: 1; }
+.clockring span { font-size: 7px; letter-spacing: .14em; color: var(--faint); display: block; text-align: center; margin-top: 2px; }
+.clockring.warn { --ring: var(--gold); }
+.clockring.danger { --ring: var(--red); }
+.clockring.danger b { color: var(--red); }
+
+/* Tall er data: alltid tabulære, aldri hoppende */
+.tile .v, .clockring, .badge, #ccFunnel .v { font-variant-numeric: tabular-nums; }
+
+/* Skeleton: ærlig ventetilstand for asynkrone paneler (brief/agenda/selskaper) */
+.skel { border: 1px solid var(--line-soft); border-radius: var(--r); padding: 14px 16px; margin-top: 8px; }
+.skel .bar { height: 11px; border-radius: 4px; margin: 7px 0; background: linear-gradient(90deg, var(--panel-2) 25%, var(--panel) 50%, var(--panel-2) 75%); background-size: 200% 100%; animation: skel 1.1s linear infinite; }
+.skel .bar.w60 { width: 60%; } .skel .bar.w35 { width: 35%; }
+@keyframes skel { to { background-position: -200% 0; } }
+
+/* Trykk-respons og synlig fokus – premium er å KJENNE at knappen tok imot */
+button { transition: transform .06s ease, border-color .15s, color .15s; }
+button:active { transform: scale(.97); }
+:focus-visible { outline: 2px solid var(--cyan-dim); outline-offset: 2px; }
+
+/* Én orkestrert ankomst: morgenbriefen stiger inn – bare den, bare ved last */
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+#ccBrief > .panel { animation: rise .32s ease both; }
+
+/* Aktiv fane på mobil: Tiffany-punkt under glyfen */
+@media (max-width: 760px) {
+  nav#mainnav button { position: relative; }
+  nav#mainnav button.on::after { content: ""; position: absolute; bottom: 1px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 6px rgba(var(--saga-glow), .8); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #ccBrief > .panel { animation: none; }
+  .skel .bar { animation: none; }
+  button { transition: none; }
+  button:active { transform: none; }
+}

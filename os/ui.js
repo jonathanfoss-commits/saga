@@ -111,6 +111,7 @@ async function renderBrief() {
   const el = $("ccBrief");
   if (!briefFetched) {
     briefFetched = true;
+    el.innerHTML = `<div class="skel" aria-hidden="true"><div class="bar"></div><div class="bar w60"></div><div class="bar w35"></div></div>`;
     const s = window.CF.Sync.status();
     if (s.configured) {
       try {
@@ -162,6 +163,7 @@ async function renderCompanies() {
   if (!el) return;
   if (!companiesFetched) {
     companiesFetched = true;
+    el.innerHTML = `<div class="skel" aria-hidden="true"><div class="bar"></div><div class="bar w60"></div><div class="bar w35"></div></div>`;
     const s = window.CF.Sync.status();
     if (s.configured) {
       try {
@@ -183,12 +185,19 @@ async function renderCompanies() {
   }
   el.innerHTML = doc.companies.map((c) => {
     const daysLeft = c.clock && c.clock.deadline ? Math.ceil((new Date(c.clock.deadline) - Date.now()) / 86400000) : null;
+    const windowDays = (c.clock && c.clock.windowDays) || 90;
     const rev = c.revenue || {};
     const openCases = (c.cases || []).filter((k) => k.status === "til_behandling");
     const clockClass = daysLeft !== null && daysLeft <= 14 ? "sev0" : daysLeft !== null && daysLeft <= 30 ? "sev1" : "sev2";
-    return `<div class="alert ${clockClass}"><div>
+    /* Klokkeringen: gjenstående del av vinduet som bue – fargen bærer alvoret */
+    const ring = daysLeft === null ? "" : (() => {
+      const pct = Math.max(0, Math.min(100, Math.round((daysLeft / windowDays) * 100)));
+      const mood = daysLeft <= 14 ? " danger" : daysLeft <= 30 ? " warn" : "";
+      return `<div class="clockring${mood}" style="--pct:${pct}" role="img" aria-label="${daysLeft} dager igjen av ${windowDays}"><div><b>${daysLeft}</b><span>DAGER</span></div></div>`;
+    })();
+    return `<div class="alert ${clockClass}">${ring}<div>
       <div class="p">${esc(c.name)}</div>
-      <div class="t">${daysLeft !== null ? `⏱ ${daysLeft} dager igjen til ekte signal` : "ingen klokke satt"} · MRR ${esc(String(rev.mrrNok ?? "?"))} kr <span class="badge ${rev.label === "FAKTISK" ? "h" : "est"}">${esc(rev.label || "ukjent")}</span></div>
+      <div class="t">${daysLeft !== null ? `frist ${esc(c.clock.deadline)} for ekte signal` : "ingen klokke satt"} · MRR ${esc(String(rev.mrrNok ?? "?"))} kr <span class="badge ${rev.label === "FAKTISK" ? "h" : "est"}">${esc(rev.label || "ukjent")}</span></div>
       <div class="d">${esc((c.clock && c.clock.signalDefinition || "").split(".")[0])}${c.status && c.status.lastDeploy ? ` · deploy ${esc(c.status.lastDeploy.state)} ${esc(c.status.lastDeploy.at || "")}` : ""}${openCases.length ? ` · ${openCases.length === 1 ? "1 åpen styresak" : openCases.length + " åpne styresaker"}: ${openCases.map((k) => esc(k.title.split(":")[0])).join(", ")}` : ""}</div>
     </div></div>`;
   }).join("");
@@ -202,6 +211,7 @@ async function renderAgenda() {
   if (!el) return;
   if (!agendaFetched) {
     agendaFetched = true;
+    el.innerHTML = `<div class="skel" aria-hidden="true"><div class="bar"></div><div class="bar w60"></div><div class="bar w35"></div></div>`;
     const s = window.CF.Sync.status();
     if (s.configured) {
       try {

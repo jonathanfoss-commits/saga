@@ -78,6 +78,11 @@ async function run() {
     const shaped = (x, probe, empty) => (x && !x.error && !x.skipped && x[probe] !== undefined ? x : empty);
     const board = shaped(r["styremøte"], "projects", {});
     const radar = shaped(r["radar"], "findings", {});
+    /* LLM-protokoller kommer ofte med markdown (#, **, ---); briefen er ren
+     * tekst i app, Issue og lydbrief – strippes ved kilden. */
+    const plain = (t) => (t || "").split("\n")
+      .map((l) => l.replace(/^#{1,4}\s*/, "").replace(/\*\*/g, "").replace(/^[-–—\s·]+$/, "").trim())
+      .filter(Boolean);
     const pnlStatus = shaped(r["cfo"], "totals", null);
     const agenda = shaped(r["agenda"], "lines", { lines: [], open: 0 });
     const domains = shaped(r["domenevakt"], "lines", { lines: [] });
@@ -104,8 +109,8 @@ async function run() {
     const full = [
       ...(justEnded ? [{ title: "Velkommen tilbake", lines: [`${justEnded === "ferie" ? "Ferien" : "Fokusperioden"} er over – dette er full brief igjen. Hendelsesloggen har alt fra perioden.`] }] : []),
       ...(agenda.lines.length ? [{ title: "Agenda", lines: agenda.lines }] : [{ title: "Agenda", lines: [`Ingen frister i dag/i morgen (${agenda.open || 0} åpne poster).`] }]),
-      { title: "Styremøtet", lines: (board.protocol || board.note || "").split("\n").filter(Boolean).slice(0, 8) },
-      { title: "Radar", lines: (radar.findings || "").split("\n").filter(Boolean).slice(0, 6) },
+      { title: "Styremøtet", lines: plain(board.protocol || board.note).slice(0, 8) },
+      { title: "Radar", lines: plain(radar.findings).slice(0, 6) },
       { title: "Grunnlovsjekk", lines: policyLines.slice(0, 6) },
       { title: "CFO", lines: cfoLines },
       { title: "Mål-treet", lines: goals.lines || [] },
