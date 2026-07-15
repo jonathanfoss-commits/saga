@@ -70,6 +70,7 @@ nav#mainnav button {
 nav#mainnav button:hover { color: var(--text); background: rgba(10,186,181,.04); }
 nav#mainnav button.on { color: var(--cyan); border-color: var(--line); background: rgba(10,186,181,.06); }
 nav#mainnav button .ic { width: 16px; text-align: center; }
+nav#mainnav button .lbl-s { display: none; }
 nav#mainnav button .n {
   margin-left: auto; min-width: 18px; text-align: center; font-size: var(--fs-xs);
   border: 1px solid rgba(232,196,102,.5); color: var(--gold); border-radius: 99px; padding: 0 5px;
@@ -245,11 +246,15 @@ tr:hover td { background: rgba(10,186,181,.025); }
   }
   #sidebar .logo, #sidebar .foot { display: none; }
   /* 8 flater: nav ruller horisontalt i stedet for å presse knapper ut av skjermen */
-  nav#mainnav { flex-direction: row; width: 100%; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-  nav#mainnav::-webkit-scrollbar { display: none; }
-  nav#mainnav button { flex: 0 0 auto; flex-direction: column; gap: 2px; padding: 6px 8px; font-size: 8.5px; letter-spacing: .06em; border: 0; white-space: nowrap; }
+  nav#mainnav { flex-direction: row; width: 100%; justify-content: space-between; overflow-x: hidden; }
+  nav#mainnav button { flex: 1 1 0; min-width: 0; flex-direction: column; gap: 3px; padding: 8px 2px; font-size: 8px; letter-spacing: .02em; border: 0; white-space: nowrap; }
+  nav#mainnav button .lbl { display: none; }
+  nav#mainnav button .lbl-s { display: block; }
   nav#mainnav button.on { background: none; }
   nav#mainnav button .n { margin-left: 0; position: absolute; transform: translate(14px, -6px); }
+  /* Tastatursnarveier og palett gir ikke mening uten tastatur */
+  #cmdkBtn { display: none; }
+  #topbar kbd { display: none; }
   #topbar { grid-column: 1; padding: 10px 14px; }
   main#view { grid-column: 1; padding: 12px 14px 96px; }
   .alert { flex-wrap: wrap; }

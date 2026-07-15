@@ -24,7 +24,7 @@ function renderLog() {
   const hist = C.History.list();
   log.innerHTML = hist.length
     ? hist.map((m) => `<div class="msg ${m.role === "user" ? "user" : "bot"}">${esc(m.text)}</div>`).join("")
-    : `<div class="msg bot">Hei! Jeg ser fabrikken og styret herfra. Prøv: «status på porteføljen», «legg denne idéen i innboksen: …», «hva sa styret sist?» – eller still et research-spørsmål (websøk).</div>`;
+    : `<div class="msg bot">Hei! Jeg er stabssjefen din – jeg ser fabrikken, styret og livsadmin herfra. Prøv: «status på porteføljen», «legg i agendaen: hente pakke fredag», «husk at …», «journalfør beslutningen: …», «sett feriemodus til …», «lag utkast til …» – eller still et research-spørsmål (websøk).</div>`;
   log.scrollTop = log.scrollHeight;
 }
 
@@ -99,7 +99,7 @@ function renderView() {
     v.dataset.ready = "1";
     v.innerHTML = `
       <h2>ASSISTENTEN – SER HELE SYSTEMET</h2>
-      <div class="note">Verktøy: porteføljestatus, idé til innboksen, styrets hovedbok, research-svar, websøk.
+      <div class="note">Verktøy: porteføljestatus, agenda, beslutningsjournal, minne, modus, lesekø, relasjoner, utkast, websøk.
         Samme samtale som i dokken (Cmd+J). Stemme og mobil-app: <a href="assistant/">åpne telefon-PWA-en →</a></div>
       <div id="chatViewSlot"></div>`;
   }
