@@ -68,6 +68,10 @@ dock.innerHTML = `
 document.body.appendChild(dock);
 
 function dockOpen() {
+  /* Mobil: dokken er et tastatur-konsept (Cmd+J/Esc). På touch finnes ingen
+   * Esc, og et fullskjerms-overlegg med ✕ under statuslinjen kan ikke lukkes –
+   * CHAT-fanen ER assistenten der. */
+  if (window.matchMedia("(max-width: 760px)").matches) { window.OS.goTab("chat"); return; }
   /* Står eieren allerede i Assistent-flaten, gir dokken ingen mening */
   if (document.querySelector("#tab-chat.on")) return;
   $("dockBody").appendChild(box);
