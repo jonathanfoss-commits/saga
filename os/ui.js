@@ -513,6 +513,8 @@ async function renderSagaCases() {
     `</div>`;
 }
 
+/* Engangsmelding til synk-statuslinjen (settes av oppsett-lenken før første render) */
+let syncMsgOnce = "";
 function renderSyncStatus(msg) {
   const s = window.CF.Sync.status();
   const pub = window.CF.Publish.config();
@@ -520,9 +522,10 @@ function renderSyncStatus(msg) {
   $("syncRepo").value = window.CF.Sync.config().repo;
   $("pubRepo").value = pub.repo;
   $("thinkRepo").value = window.CF.Think.config().repo;
-  $("syncStatus").textContent = msg || (s.configured
+  $("syncStatus").textContent = msg || syncMsgOnce || (s.configured
     ? `Koblet til ${s.repo}. Sist synket: ${s.lastSyncAt ? when(s.lastSyncAt) : "aldri"}.`
     : "Ikke konfigurert – se DIN TUR over for klikk-for-klikk-oppsett.");
+  syncMsgOnce = "";
 }
 $("ghSaveBtn").onclick = () => {
   const pat = $("ghPat").value.trim();
@@ -1370,6 +1373,25 @@ document.addEventListener("keydown", (e) => {
 });
 
 /* ---------- oppstart ---------- */
+/* Oppsett-lenke: #oppsett=<base64 JSON {syncRepo,pubRepo,thinkRepo}> fyller
+ * repo-oppsettet på en ny enhet uten tasting. ALDRI PAT-en – hemmeligheter
+ * reiser ikke i lenker. Eieren bekrefter eksplisitt før noe lagres, så en
+ * tilsendt lenke aldri kan endre oppsettet i det stille. */
+(() => {
+  const m = (location.hash || "").match(/^#oppsett=(.+)$/);
+  if (!m) return;
+  history.replaceState(null, "", "#/system");
+  let cfg = null;
+  try { cfg = JSON.parse(atob(decodeURIComponent(m[1]))); } catch (_) { return; }
+  const vals = [["Datarepo", cfg && cfg.syncRepo], ["Pages-repo", cfg && cfg.pubRepo], ["Vault-repo", cfg && cfg.thinkRepo]]
+    .filter(([, v]) => typeof v === "string" && v.trim());
+  if (!vals.length) return;
+  if (!confirm("Sette opp repoene på denne enheten?\n\n" + vals.map(([k, v]) => k + ": " + v).join("\n") + "\n\n(PAT-en følger aldri med en lenke – den limer du inn selv etterpå.)")) return;
+  if (typeof cfg.syncRepo === "string" && cfg.syncRepo.trim()) window.CF.Sync.saveConfig({ repo: cfg.syncRepo.trim() });
+  if (typeof cfg.pubRepo === "string" && cfg.pubRepo.trim()) window.CF.Publish.saveConfig({ repo: cfg.pubRepo.trim() });
+  if (typeof cfg.thinkRepo === "string" && cfg.thinkRepo.trim()) window.CF.Think.saveConfig({ repo: cfg.thinkRepo.trim() });
+  syncMsgOnce = "Repo-oppsett lagret ✓ – lim inn PAT-en over og trykk «Lagre oppsett».";
+})();
 route();
 /* Flate-API for os/board.js og os/chat.js (lastes etter denne fila og kaller
  * OS.registerView; er flaten aktiv i dyp-lenken re-rutes det ved registrering) */
