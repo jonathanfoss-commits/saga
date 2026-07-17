@@ -264,6 +264,7 @@ function aeisHandler(route) {
     /* cf_config følger eksport/import (synk-formatet) – tomme verdier overskriver aldri */
     const rt = await page.evaluate(() => {
       localStorage.setItem("cf_secret_pat", "github_pat_TESTLEAK");
+      window.CF.Inbox.add("Idé fanget på mobilen");
       window.CF.Sync.saveConfig({ repo: "o/data" }); window.CF.Publish.saveConfig({ repo: "o/pages" }); window.CF.Think.saveConfig({ repo: "o/vault" });
       const dump = window.CF.Store.exportAll();
       window.CF.Sync.saveConfig({ repo: "" }); window.CF.Publish.saveConfig({ repo: "" }); window.CF.Think.saveConfig({ repo: "" });
@@ -272,11 +273,17 @@ function aeisHandler(route) {
       window.CF.Store.importAll(JSON.stringify({ cf_config: { syncRepo: "", pubRepo: "", thinkRepo: "" } }));
       const afterEmpty = [window.CF.Sync.config().repo, window.CF.Publish.config().repo, window.CF.Think.config().repo];
       const patLeak = window.CF.Store.exportAll().includes("github_pat");
-      return { restored, afterEmpty, patLeak };
+      /* Idé-innboksen følger synken: fang idé → eksporter → tøm → importer → idéen er tilbake */
+      const dump2 = window.CF.Store.exportAll();
+      localStorage.removeItem("cf_inbox");
+      window.CF.Store.importAll(dump2);
+      const inboxRestored = window.CF.Inbox.list().some((i) => i.text === "Idé fanget på mobilen");
+      return { restored, afterEmpty, patLeak, inboxRestored };
     });
     check("repo-oppsettet overlever eksport → import (ny enhet får det via pull)", rt.restored.join(",") === "o/data,o/pages,o/vault", rt);
     check("tomme cf_config-verdier overskriver aldri lokalt oppsett", rt.afterEmpty.join(",") === "o/data,o/pages,o/vault", rt);
     check("PAT-en finnes aldri i eksporten", !rt.patLeak, null);
+    check("idé-innboksen følger synken (fanget på én enhet → finnes på alle)", rt.inboxRestored, rt);
     check("ingen JS-feil i oppsett-flyten", errors.length === 0, errors);
     await page.close();
   }
