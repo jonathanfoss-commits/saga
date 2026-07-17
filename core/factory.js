@@ -2325,6 +2325,14 @@ const AutoSync = {
     clearTimeout(this.timer);
     this.timer = setTimeout(() => this.pushSilent(), 20000);
   },
+  /* Flush: appen legges bort/lukkes NÅ – ikke vent på debouncen. iOS gir et
+   * kort vindu ved visibilitychange→hidden; rekker ikke pushen fram, består
+   * saga_dirty og neste åpning pusher (onWake) – ingenting går tapt. */
+  flush() {
+    if (!this.enabled() || !this.dirty()) return;
+    clearTimeout(this.timer);
+    this.pushSilent();
+  },
   async pushSilent() {
     if (!this.enabled() || !this.dirty()) return;
     try { await Sync.push(); this.markClean(); this.notify("Synket ↑"); }

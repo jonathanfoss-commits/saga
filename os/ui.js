@@ -560,7 +560,13 @@ window.OS.syncBadge = (msg) => {
 };
 $("autoSyncChk").checked = window.CF.Store.get("cf_autosync", true);
 $("autoSyncChk").onchange = () => { window.CF.Store.set("cf_autosync", $("autoSyncChk").checked); };
-document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") window.CF.AutoSync.onWake(); });
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") window.CF.AutoSync.onWake();
+  /* Legges appen bort (hjem-knapp/app-bytte/lukk): skyv endringene ut STRAKS –
+   * telefonen kan være av i timevis før neste åpning */
+  if (document.visibilityState === "hidden") window.CF.AutoSync.flush();
+});
+window.addEventListener("pagehide", () => window.CF.AutoSync.flush());
 setTimeout(() => window.CF.AutoSync.onWake(), 800); /* ved oppstart, etter første render */
 
 /* ---------- Modus (5.0 B4) ---------- */
