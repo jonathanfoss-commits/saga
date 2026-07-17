@@ -8,6 +8,7 @@ name: SAGA night shift
 on:
   schedule:
     - cron: "0 4 * * *"   # hver natt 04:00 UTC (05/06 norsk tid)
+    - cron: "0 10 * * *"  # middagskjøring 10:00 UTC (12/13 norsk tid) – eier-godkjent 17.07.2026 (dobler AI-kost, dekkes av kostnadstaket)
   workflow_dispatch:
 
 permissions:

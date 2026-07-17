@@ -360,6 +360,34 @@ function aeisHandler(route) {
     await page.close();
   }
 
+  /* ---------- OS 8: flush ved lukking – endringer forlater enheten STRAKS ---------- */
+  console.log("OS 8: skitne data pushes i det appen legges bort (flush), ikke etter 20s debounce");
+  {
+    const page = await browser.newPage({ viewport: { width: 375, height: 812 } });
+    const puts = [];
+    await page.route("**/api.github.com/repos/o/data", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ private: true }) }));
+    await page.route("**/api.github.com/repos/o/data/contents/**", (r) => {
+      if (r.request().method() === "PUT") { puts.push(r.request().url()); return r.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ content: { sha: "ny" } }) }); }
+      r.fulfill({ status: 404, contentType: "application/json", body: "{}" });
+    });
+    await page.goto(BASE, { waitUntil: "networkidle" });
+    await page.evaluate(() => {
+      localStorage.clear();
+      localStorage.setItem("cf_secret_pat", "github_pat_test");
+      localStorage.setItem("cf_sync", JSON.stringify({ repo: "o/data", branch: "main", lastSyncAt: null, lastSha: null }));
+    });
+    await page.reload({ waitUntil: "networkidle" });
+    await page.evaluate(() => { window.CF.Inbox.add("idé rett før lukking"); });
+    const before = await page.evaluate(() => localStorage.getItem("saga_dirty"));
+    await page.evaluate(() => window.CF.AutoSync.flush());
+    await page.waitForFunction(() => localStorage.getItem("saga_dirty") === null, null, { timeout: 5000 });
+    check("skitne data fantes før flush og er rene etterpå (pushet uten å vente på debounce)",
+      before === "1" && puts.some((u) => u.includes("factory-data.json")), { before, puts: puts.length });
+    check("flush uten skitne data pusher ingenting",
+      await page.evaluate(async () => { const n = performance.getEntriesByType("resource").length; window.CF.AutoSync.flush(); await new Promise((r) => setTimeout(r, 300)); return true; }) && puts.length === 1, puts.length);
+    await page.close();
+  }
+
   await browser.close();
   console.log(failures === 0 ? "\nALL OS TESTS PASSED" : `\n${failures} FAILURES`);
   process.exit(failures === 0 ? 0 : 1);
